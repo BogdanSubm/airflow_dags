@@ -164,7 +164,7 @@ def upload_agg(**context):
 
 
 with DAG(
-        dag_id="iakotov_pz1",
+        dag_id="aiakotov_pz2",
         tags=['4', 'admin'],
         schedule='@daily',
         default_args=DEFAULT_ARGS,
