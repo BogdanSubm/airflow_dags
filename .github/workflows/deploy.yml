@@ -20,7 +20,7 @@ jobs:
         with:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SSH_USERNAME }}
-          password: ${{ secrets.SSH_PASSWORD }}  # Используем пароль
+          password: ${{ secrets.SSH_PASSWORD }}
           port: 22
           source: "dags/*"
           target: "/home/airflow_user/airflow/"
