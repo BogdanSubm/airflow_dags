@@ -6,7 +6,7 @@ from airflow.operators.python import PythonOperator
 from airflow.hooks.base import BaseHook
 
 DEFAULT_ARGS = {
-    'owner': 'admin',
+    'owner': 'vildan-kharisov-7270',
     'retries': 2,
     'retry_delay': 600,
     'start_date': datetime(2024, 11, 12),
@@ -56,14 +56,14 @@ def load_from_api(**context):
             row.append(passback_params.get('lis_result_sourcedid'))
             row.append(passback_params.get('lis_outcome_service_url'))
 
-            cursor.execute("INSERT INTO admin_table VALUES (%s, %s, %s, %s, %s, %s, %s)", row)
+            cursor.execute("INSERT INTO vildan_kharisov_table VALUES (%s, %s, %s, %s, %s, %s, %s)", row)
 
         conn.commit()
 
 
 with DAG(
-    dag_id="load_from_api_to_pg",
-    tags=['4', 'admin'],
+    dag_id="vildan-kharisov-7270_load_from_api_to_pg",
+    tags=['4', 'vildan'],
     schedule='@daily',
     default_args=DEFAULT_ARGS,
     max_active_runs=1,
