@@ -1,7 +1,11 @@
 name: Auto-Merge DAG PRs
 
+permissions:
+  contents: write
+  pull-requests: write
+
 on:
-  pull_request:
+  pull_request_target:
     types:
       - opened
       - synchronize
@@ -13,12 +17,17 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: List changed files
+        run: git diff --name-only ${{ github.event.pull_request.base.sha }} HEAD
 
       - name: Verify changes are only in dags/
         id: check_changes
         run: |
-          if git diff --name-only origin/main HEAD | grep -v '^dags/'; then
-            echo "PR contains changes outside of dags/. Skipping auto-approve and merge."
+          if git diff --name-only ${{ github.event.pull_request.base.sha }} HEAD | grep -v '^dags/'; then
+            echo "PR содержит изменения за пределами папки dags/. Авто-мердж отменён."
             exit 1
           fi
 
