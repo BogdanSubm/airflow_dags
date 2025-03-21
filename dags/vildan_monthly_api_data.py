@@ -24,8 +24,8 @@ def load_from_api(**context):
     payload = {
         'client': 'Skillfactory',
         'client_key': 'M2MGWS',
-        'start': context['ds'],
-        'end': pendulum.parse(context['ds']).add(days=1).to_date_string(),
+        'start': '{{ds}}',
+        'end': pendulum.parse('{{ds}}').add(days=1).to_date_string(),
     }
     response = requests.get(API_URL, params=payload)
     data = response.json()
@@ -44,7 +44,7 @@ def load_from_api(**context):
         tcp_user_timeout=600
     ) as conn:
         cursor = conn.cursor()
-        cursor.execute(f"delete from vildan_kharisov_table where created_at::date >= '{context['ds']}'::date ")
+        cursor.execute("delete from vildan_kharisov_table where created_at::date >= {{ds}}::date ")
 
         for el in data:
             row = []
@@ -64,7 +64,7 @@ def load_from_api(**context):
 with DAG(
     dag_id="vildan-kharisov-7270_load_monthly_api",
     tags=['4', 'vildan'],
-    schedule='@monthly',
+    schedule='@daily',
     default_args=DEFAULT_ARGS,
     max_active_runs=1,
     max_active_tasks=1
