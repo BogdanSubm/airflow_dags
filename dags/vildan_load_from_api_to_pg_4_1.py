@@ -9,7 +9,7 @@ DEFAULT_ARGS = {
     'owner': 'vildan-kharisov-7270',
     'retries': 2,
     'retry_delay': 600,
-    'start_date': datetime(2024, 11, 12),
+    'start_date': datetime(2024, 11, 11),
 }
 
 API_URL = "https://b2b.itresume.ru/api/statistics"
@@ -64,7 +64,7 @@ def load_from_api(**context):
 with DAG(
     dag_id="vildan-kharisov-7270_load_from_api_to_pg",
     tags=['4', 'vildan'],
-    schedule='@daily',
+    schedule='0 0 * * 1-5',
     default_args=DEFAULT_ARGS,
     max_active_runs=1,
     max_active_tasks=1
