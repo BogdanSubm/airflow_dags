@@ -9,7 +9,7 @@ DEFAULT_ARGS = {
     'owner': 'vildan-kharisov-7270',
     'retries': 2,
     'retry_delay': 600,
-    'start_date': datetime(2024, 11, 11),
+    'start_date': datetime(2024, 11, 10),
 }
 
 API_URL = "https://b2b.itresume.ru/api/statistics"
