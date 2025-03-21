@@ -44,6 +44,7 @@ def load_from_api(**context):
         tcp_user_timeout=600
     ) as conn:
         cursor = conn.cursor()
+        cursor.execute(f"delete from vildan_kharisov_table where created_at::date >= '{context['ds']}'::date ")
 
         for el in data:
             row = []
@@ -55,7 +56,6 @@ def load_from_api(**context):
             row.append(passback_params.get('oauth_consumer_key'))
             row.append(passback_params.get('lis_result_sourcedid'))
             row.append(passback_params.get('lis_outcome_service_url'))
-
             cursor.execute("INSERT INTO vildan_kharisov_table VALUES (%s, %s, %s, %s, %s, %s, %s)", row)
 
         conn.commit()
