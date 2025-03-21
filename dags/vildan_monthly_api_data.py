@@ -15,7 +15,7 @@ DEFAULT_ARGS = {
 API_URL = "https://b2b.itresume.ru/api/statistics"
 
 
-def load_from_api(**context):
+def load_from_api(ds):
     import requests
     import pendulum
     import psycopg2 as pg
@@ -24,8 +24,8 @@ def load_from_api(**context):
     payload = {
         'client': 'Skillfactory',
         'client_key': 'M2MGWS',
-        'start': context['ds'],
-        'end': pendulum.parse(context['ds']).add(days=1).to_date_string(),
+        'start': ds,
+        'end': pendulum.parse(ds).add(days=1).to_date_string(),
     }
     response = requests.get(API_URL, params=payload)
     data = response.json()
@@ -44,7 +44,7 @@ def load_from_api(**context):
         tcp_user_timeout=600
     ) as conn:
         cursor = conn.cursor()
-        cursor.execute("delete from vildan_kharisov_table where created_at::date >= {{ ds }}::date ")
+        cursor.execute(f"delete from vildan_kharisov_table where created_at::date >= { ds }::date ")
 
         for el in data:
             row = []
@@ -76,6 +76,7 @@ with DAG(
     load_from_api = PythonOperator(
         task_id='load_from_api',
         python_callable=load_from_api,
+        op_args= ['{{ ds }}']
     )
 
     dag_start >> load_from_api >> dag_end
