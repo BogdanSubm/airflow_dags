@@ -15,7 +15,7 @@ DEFAULT_ARGS = {
 API_URL = "https://b2b.itresume.ru/api/statistics"
 
 
-def load_from_api(ds):
+def load_from_api(ds:string):
     import requests
     import pendulum
     import psycopg2 as pg
@@ -76,7 +76,7 @@ with DAG(
     load_from_api = PythonOperator(
         task_id='load_from_api',
         python_callable=load_from_api,
-        op_args= ['{{ ds }}']
+        op_kwargs={'ds': '{{ ds }}'}
     )
 
     dag_start >> load_from_api >> dag_end
