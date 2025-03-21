@@ -44,7 +44,7 @@ def load_from_api(ds):
         tcp_user_timeout=600
     ) as conn:
         cursor = conn.cursor()
-        cursor.execute(f"delete from vildan_kharisov_table where created_at::date >= { ds }::date ")
+        cursor.execute(f"delete from vildan_kharisov_table where created_at::date >= '{ ds }'::date ")
 
         for el in data:
             row = []
