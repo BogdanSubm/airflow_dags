@@ -24,7 +24,7 @@ def load_from_api(**context):
     payload = {
         'client': 'Skillfactory',
         'client_key': 'M2MGWS',
-        'start': '{{ ds }}',
+        'start': context['ds'],
         'end': pendulum.parse(context['ds']).add(days=1).to_date_string(),
     }
     response = requests.get(API_URL, params=payload)
