@@ -15,7 +15,7 @@ DEFAULT_ARGS = {
 API_URL = "https://b2b.itresume.ru/api/statistics"
 
 
-def load_from_api(ds:string):
+def load_from_api(ds):
     import requests
     import pendulum
     import psycopg2 as pg
