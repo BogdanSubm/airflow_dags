@@ -24,8 +24,8 @@ def load_from_api(**context):
     payload = {
         'client': 'Skillfactory',
         'client_key': 'M2MGWS',
-        'start': '{{ds}}',
-        'end': pendulum.parse('{{ds}}').add(days=1).to_date_string(),
+        'start': {{ds}},
+        'end': pendulum.parse({{ds}}).add(days=1).to_date_string(),
     }
     response = requests.get(API_URL, params=payload)
     data = response.json()
