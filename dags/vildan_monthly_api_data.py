@@ -9,13 +9,13 @@ DEFAULT_ARGS = {
     'owner': 'vildan-kharisov-7270',
     'retries': 2,
     'retry_delay': 600,
-    'start_date': datetime(2024, 11, 4),
+    'start_date': datetime(2025, 2, 1),
 }
 
 API_URL = "https://b2b.itresume.ru/api/statistics"
 
 
-def load_from_api(**context):
+def load_from_api(ds):
     import requests
     import pendulum
     import psycopg2 as pg
@@ -24,8 +24,8 @@ def load_from_api(**context):
     payload = {
         'client': 'Skillfactory',
         'client_key': 'M2MGWS',
-        'start': context['ds'],
-        'end': pendulum.parse(context['ds']).add(days=1).to_date_string(),
+        'start': ds,
+        'end': pendulum.parse(ds).add(days=1).to_date_string(),
     }
     response = requests.get(API_URL, params=payload)
     data = response.json()
@@ -44,7 +44,7 @@ def load_from_api(**context):
         tcp_user_timeout=600
     ) as conn:
         cursor = conn.cursor()
-        cursor.execute(f"delete from vildan_kharisov_table where created_at::date >= '{context['ds']}'::date ")
+        cursor.execute(f"delete from vildan_kharisov_table where created_at::date >= '{ ds }'::date ")
 
         for el in data:
             row = []
@@ -62,9 +62,9 @@ def load_from_api(**context):
 
 
 with DAG(
-    dag_id="vildan-kharisov-7270_load_from_api_to_pg",
+    dag_id="vildan-kharisov-7270_load_monthly_api",
     tags=['4', 'vildan'],
-    schedule='0 0 * * 1-5',
+    schedule='@daily',
     default_args=DEFAULT_ARGS,
     max_active_runs=1,
     max_active_tasks=1
@@ -76,6 +76,7 @@ with DAG(
     load_from_api = PythonOperator(
         task_id='load_from_api',
         python_callable=load_from_api,
+        op_kwargs={'ds': '{{ ds }}'}
     )
 
     dag_start >> load_from_api >> dag_end
