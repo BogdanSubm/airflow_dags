@@ -11,7 +11,7 @@ DEFAULT_ARGS = {
     'owner': 'vildan-kharisov-7270',
     'retries': 2,
     'retry_delay': 600,
-    'start_date': datetime(2024, 11, 4),
+    'start_date': datetime(2025, 2, 1),
 }
 
 
@@ -115,7 +115,7 @@ def combine_data(**context):
 with DAG(
     dag_id="vildan-kharisov-7270_combine_api_data",
     tags=['vildan', '4'],
-    schedule='0 0 * * 1-5',
+    schedule='@daily', #'0 0 * * 1-5'
     default_args=DEFAULT_ARGS,
     max_active_runs=1,
     max_active_tasks=1
