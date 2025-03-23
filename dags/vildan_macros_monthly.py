@@ -19,17 +19,17 @@ class MonthTemplates:
     def current_month_start(date) -> str:
         logical_dt = datetime.strptime(date, "%Y-%m-%d")
 
-        current_month_start = logical_dt - timedelta(days=logical_dt.day-1)
+        month_start = logical_dt - timedelta(days=logical_dt.day-1)
 
-        return current_month_start.strftime("%Y-%m-%d")
+        return month_start.strftime("%Y-%m-%d")
 
     @staticmethod
     def current_month_end(date) -> str:
         logical_dt = datetime.strptime(date, "%Y-%m-%d")
 
-        current_month_end = logical_dt + timedelta(days=cal.monthrange(logical_dt.year, logical_dt.month)[1]- logical_dt.day)
+        month_end = logical_dt + timedelta(days=cal.monthrange(logical_dt.year, logical_dt.month)[1]- logical_dt.day)
 
-        return сurrent_month_end.strftime("%Y-%m-%d")
+        return month_end.strftime("%Y-%m-%d")
 
 
 def upload_data(month_start: str, month_end: str, **context):
