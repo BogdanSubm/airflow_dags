@@ -98,12 +98,13 @@ def combine_data(week_start: str, week_end: str, **context):
     import psycopg2 as pg
 
     sql_query = f"""
-        INSERT INTO vildan_agg_table_weekly
+        INSERT INTO vildan_agg_table_weekly_daily
         SELECT lti_user_id,
                attempt_type,
                COUNT(1),
                COUNT(CASE WHEN is_correct THEN NULL ELSE 1 END) AS attempt_failed_count,
                '{week_start}'::timestamp
+               ,'{context['ds']}'::timestamp
           FROM vildan_kharisov_table
          WHERE created_at >= '{week_start}'::timestamp 
                AND created_at < '{week_end}'::timestamp + INTERVAL '1 days'
