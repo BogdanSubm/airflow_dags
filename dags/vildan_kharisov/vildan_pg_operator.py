@@ -8,7 +8,7 @@ class PostgresOperator(BaseOperator):
         super().__init__(**kwargs)
         self.sql_query = sql_query
 
-    def execute(self,sql_query,context):
+    def execute(self,context):
         # бизнес-логика
         connection = BaseHook.get_connection('conn_pg')
         with pg.connect(
