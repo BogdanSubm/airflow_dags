@@ -10,6 +10,7 @@ class PostgresOperator(BaseOperator):
         self.date_from = date_from
         self.date_to = date_to
 
+    cursor.execute(f"delete from vildan_kharisov_table where created_at::date >= '{ds}'::date ")
     def execute(self,context):
         # бизнес-логика
         query = f"""
@@ -20,8 +21,8 @@ class PostgresOperator(BaseOperator):
                    COUNT(CASE WHEN is_correct THEN NULL ELSE 1 END) AS attempt_failed_count,
                    {self.date_from}::timestamp
               FROM vildan_kharisov_table
-             WHERE created_at >= {self.date_from}::timestamp
-                   AND created_at < {self.date_to}::timestamp
+             WHERE created_at::date >= '{self.date_from}'::date 
+                   AND created_at <' {self.date_to}'::date 
               GROUP BY lti_user_id, attempt_type;
         """
         connection = BaseHook.get_connection('conn_pg')
