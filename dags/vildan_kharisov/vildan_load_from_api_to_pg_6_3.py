@@ -5,6 +5,7 @@ from airflow.operators.empty import EmptyOperator
 
 from vildan_kharisov.vildan_api_to_pg_operator import APIToPgOperator
 from vildan_kharisov.vildan_branch_operator import CustomBranchOperator
+from vildan_kharisov.PostgresOperator.py import PostgresOperator
 
 DEFAULT_ARGS = {
     'owner': 'vildan_kharisov',
@@ -12,6 +13,19 @@ DEFAULT_ARGS = {
     'retry_delay': 600,
     'start_date': datetime(2025, 3, 17),
 }
+
+sql_query = """
+    INSERT INTO vildan_agg_table
+    SELECT lti_user_id,
+           attempt_type,
+           COUNT(1),
+           COUNT(CASE WHEN is_correct THEN NULL ELSE 1 END) AS attempt_failed_count,
+           '{{ds}}'::timestamp
+      FROM vildan_kharisov_table
+     WHERE created_at >= '{{ds}}'::timestamp
+           AND created_at < '{{ds}}'::timestamp + INTERVAL '1 days'
+      GROUP BY lti_user_id, attempt_type;
+"""
 
 
 with DAG(
@@ -35,5 +49,9 @@ with DAG(
         date_from='{{ ds }}',
         date_to='{{ macros.ds_add(ds, 1) }}',
     )
+    postgres = PostgresOperator(
+        task_id='sql_to_pg',
+        sql_query = sql_query,
+    )
 
-    dag_start >> branch >> load_from_api >> dag_end
+    dag_start >> branch >> load_from_api >> sql_to_pg >> dag_end
