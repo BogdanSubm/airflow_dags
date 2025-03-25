@@ -49,7 +49,7 @@ with DAG(
         date_from='{{ ds }}',
         date_to='{{ macros.ds_add(ds, 1) }}',
     )
-    postgres = PostgresOperator(
+    sql_to_pg = PostgresOperator(
         task_id='sql_to_pg',
         sql_query = sql_query,
     )
