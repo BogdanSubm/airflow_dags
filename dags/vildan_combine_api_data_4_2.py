@@ -8,7 +8,7 @@ from airflow.hooks.base import BaseHook
 
 
 DEFAULT_ARGS = {
-    'owner': 'vildan-kharisov-7270',
+    'owner': 'vildan_kharisov',
     'retries': 2,
     'retry_delay': 600,
     'start_date': datetime(2025, 2, 1),
