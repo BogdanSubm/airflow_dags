@@ -4,6 +4,7 @@ from airflow.models.baseoperator import BaseOperator
 
 class PostgresOperator(BaseOperator):
     template_fields = ('date_from', 'date_to')
+
     def __init__(self,date_from, date_to,**kwargs):
         super().__init__(**kwargs)
         #self.sql_query = sql_query
@@ -20,10 +21,10 @@ class PostgresOperator(BaseOperator):
                    COUNT(CASE WHEN is_correct THEN NULL ELSE 1 END) AS attempt_failed_count,
                    '{self.date_from}'::date
               FROM vildan_kharisov_table
-             WHERE created_at::date >= '2025-03-17'::date  
-                   AND created_at < '2025-03-18'::date 
+             WHERE created_at::date >= '{self.date_from}'::date 
+                   AND created_at < '{self.date_to}'::date
               GROUP BY lti_user_id, attempt_type;
-        """#'{self.date_from}'::date
+        """
         connection = BaseHook.get_connection('conn_pg')
         with pg.connect(
                 dbname='etl',
