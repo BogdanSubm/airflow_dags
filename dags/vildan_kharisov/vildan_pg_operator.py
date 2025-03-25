@@ -3,10 +3,12 @@ from airflow.hooks.base import BaseHook
 from airflow.models.baseoperator import BaseOperator
 
 class PostgresOperator(BaseOperator):
-    def __init__(self,sql_query,**kwargs):
-        template_fields = ('sql_query',)
+    def __init__(self,sql_query:str,date_from: str, date_to: str,**kwargs):
+        template_fields = ('date_from', 'date_to')
         super().__init__(**kwargs)
         self.sql_query = sql_query
+        self.date_from = date_from
+        self.date_to = date_to
 
     def execute(self,context):
         # бизнес-логика
