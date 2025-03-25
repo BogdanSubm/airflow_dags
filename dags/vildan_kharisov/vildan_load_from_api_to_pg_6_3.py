@@ -14,18 +14,6 @@ DEFAULT_ARGS = {
     'start_date': datetime(2025, 3, 17),
 }
 
-sql_query = f"""
-    INSERT INTO vildan_agg_table
-    SELECT lti_user_id,
-           attempt_type,
-           COUNT(1),
-           COUNT(CASE WHEN is_correct THEN NULL ELSE 1 END) AS attempt_failed_count,
-           {date_from}::timestamp
-      FROM vildan_kharisov_table
-     WHERE created_at >= {date_from}::timestamp
-           AND created_at < {date_to}::timestamp
-      GROUP BY lti_user_id, attempt_type;
-"""
 
 
 with DAG(
@@ -51,7 +39,7 @@ with DAG(
     )
     sql_to_pg = PostgresOperator(
         task_id='sql_to_pg',
-        sql_query = sql_query,
+        #sql_query = sql_query,
         date_from='{{ ds }}',
         date_to='{{ macros.ds_add(ds, 1) }}',
     )
