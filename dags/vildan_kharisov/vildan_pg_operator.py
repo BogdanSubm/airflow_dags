@@ -3,9 +3,9 @@ from airflow.hooks.base import BaseHook
 from airflow.models.baseoperator import BaseOperator
 
 class PostgresOperator(BaseOperator):
-    def __init__(self,sql_query,*args,**kwargs):
+    def __init__(self,sql_query,**kwargs):
         template_fields = ('sql_query',)
-        super().__init__(*args,**kwargs)
+        super().__init__(**kwargs)
         self.sql_query = sql_query
 
     def execute(self,sql_query,context):
