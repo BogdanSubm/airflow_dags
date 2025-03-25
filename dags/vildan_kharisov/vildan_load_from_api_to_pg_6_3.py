@@ -5,7 +5,7 @@ from airflow.operators.empty import EmptyOperator
 
 from vildan_kharisov.vildan_api_to_pg_operator import APIToPgOperator
 from vildan_kharisov.vildan_branch_operator import CustomBranchOperator
-from vildan_kharisov.PostgresOperator.py import PostgresOperator
+from vildan_kharisov.vildan_pg_operator import PostgresOperator
 
 DEFAULT_ARGS = {
     'owner': 'vildan_kharisov',
