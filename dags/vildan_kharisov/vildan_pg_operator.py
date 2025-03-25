@@ -10,7 +10,6 @@ class PostgresOperator(BaseOperator):
         self.date_from = date_from
         self.date_to = date_to
 
-    cursor.execute(f"delete from vildan_kharisov_table where created_at::date >= '{ds}'::date ")
     def execute(self,context):
         # бизнес-логика
         query = f"""
