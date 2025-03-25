@@ -6,7 +6,7 @@ class PostgresOperator(BaseOperator):
     #template_fields = ('date_from', 'date_to')
     template_fields = ('sql_query',)
 
-    def __init__(self,date_from, date_to,**kwargs):
+    def __init__(self,sql_query,**kwargs):
         super().__init__(**kwargs)
         self.sql_query = sql_query
         # self.date_from = date_from
