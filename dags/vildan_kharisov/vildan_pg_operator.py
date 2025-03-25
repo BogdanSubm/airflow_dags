@@ -39,5 +39,5 @@ class PostgresOperator(BaseOperator):
                 tcp_user_timeout=600
         ) as conn:
             cursor = conn.cursor()
-            cursor.execute(sql_query)
+            cursor.execute(self.sql_query)
             conn.commit()
