@@ -18,10 +18,10 @@ class PostgresOperator(BaseOperator):
                    attempt_type,
                    COUNT(1),
                    COUNT(CASE WHEN is_correct THEN NULL ELSE 1 END) AS attempt_failed_count,
-                   {self.date_from}::timestamp
+                   '{self.date_from}'::timestamp
               FROM vildan_kharisov_table
              WHERE created_at::date >= '{self.date_from}'::date 
-                   AND created_at <' {self.date_to}'::date 
+                   AND created_at <'{self.date_to}'::date 
               GROUP BY lti_user_id, attempt_type;
         """
         connection = BaseHook.get_connection('conn_pg')
