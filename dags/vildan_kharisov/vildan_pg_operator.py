@@ -18,7 +18,7 @@ class PostgresOperator(BaseOperator):
                    attempt_type,
                    COUNT(1),
                    COUNT(CASE WHEN is_correct THEN NULL ELSE 1 END) AS attempt_failed_count,
-                   '2025-03-17'::date 
+                   '{self.date_from}'::date
               FROM vildan_kharisov_table
              WHERE created_at::date >= '2025-03-17'::date  
                    AND created_at < '2025-03-18'::date 
