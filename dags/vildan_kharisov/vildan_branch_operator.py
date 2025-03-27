@@ -7,15 +7,17 @@ from airflow.models import BaseOperator, SkipMixin
 
 class CustomBranchOperator(BaseOperator, SkipMixin):
 
-    def __init__(self, **kwargs):
+
+    def __init__(self,need_dates, **kwargs):
         super().__init__(**kwargs)
+        self.need_dates = need_dates
 
     def execute(self, context: Any):
         dt = pendulum.parse(context['ds'])
 
         tasks_to_execute = []
 
-        if dt.weekday() in [0, 4, 6]:
+        if dt.day in self.need_dates:
             tasks_to_execute.append('load_from_api')
 
         valid_task_ids = set(context["dag"].task_ids)
