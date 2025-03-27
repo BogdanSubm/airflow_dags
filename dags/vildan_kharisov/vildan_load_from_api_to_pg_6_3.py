@@ -25,7 +25,7 @@ query = """
             AND created_at < '{{ds}}'::date + INTERVAL '1 days'
        GROUP BY lti_user_id, attempt_type;
  """
-
+dates_of_month = [17,19,22]
 
 with DAG(
     dag_id="vildan_load_from_api_to_pg_with_operator_and_branch",
@@ -40,7 +40,8 @@ with DAG(
     dag_end = EmptyOperator(task_id='dag_end')
 
     branch = CustomBranchOperator(
-        task_id='branch'
+        task_id='branch',
+        need_dates = dates_of_month
     )
 
     load_from_api = APIToPgOperator(
@@ -51,8 +52,6 @@ with DAG(
     sql_to_pg = PostgresOperator(
         task_id='sql_to_pg',
         sql_query = query,
-        # date_from='{{ ds }}',
-        # date_to='{{ macros.ds_add(ds, 1) }}',
     )
 
     dag_start >> branch >> load_from_api >> sql_to_pg >> dag_end
