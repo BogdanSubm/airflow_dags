@@ -122,8 +122,8 @@ query1="""
 query2="""
             SELECT COUNT(1)
               FROM vildan_agg_table
-             WHERE created_at >= '{{ ds }}'::timestamp
-              AND created_at < '{{ ds }}'::timestamp + INTERVAL '1 days';
+             WHERE date >= '{{ ds }}'::timestamp
+              AND date < '{{ ds }}'::timestamp + INTERVAL '1 days';
         """
 
 with DAG(
@@ -153,7 +153,7 @@ with DAG(
     )
     sql_sensor = SqlSensor(
         task_id='sql_sensor',
-        sql= {'query_1':query1,'query_2':query2},
+        sql= {'query_1':query1},
         mode='reschedule',
         poke_interval=300,
     )
