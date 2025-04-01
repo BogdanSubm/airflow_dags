@@ -153,7 +153,7 @@ with DAG(
     )
     sql_sensor = SqlSensor(
         task_id='sql_sensor',
-        sql= {'query_1':query1,'query_2':query2},
+        sql= {'query_1':query1},
         mode='reschedule',
         poke_interval=300,
     )
