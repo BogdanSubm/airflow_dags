@@ -25,13 +25,24 @@ class SqlSensor(BaseSensorOperator):
                 tcp_user_timeout=600
         ) as conn:
             cursor = conn.cursor()
+            flag = False
+            for i in self.sql.values():
+                self.log.info(i)
+                cursor.execute(i)
+                result = cursor.fetchone()
+                if result[0]>0:
+                    flag = True
+                else:
+                    flag = False
+        return flag
 
-            self.log.info(self.sql['query_sql'])
 
-            cursor.execute(self.sql['query_sql'])
-            result = cursor.fetchone()
+            # self.log.info(self.sql['query_1'])
+            #
+            # cursor.execute(self.sql['query_1'])
+            # result = cursor.fetchone()
 
-        if result[0] > 0:
-            return True
-        else:
-            return False
+        # if result[0] > 0:
+        #     return True
+        # else:
+        #     return False
