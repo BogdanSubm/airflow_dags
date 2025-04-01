@@ -112,9 +112,16 @@ def combine_data(**context):
         cursor = conn.cursor()
         cursor.execute(sql_query)
         conn.commit()
-query="""
+query1="""
             SELECT COUNT(1)
               FROM vildan_kharisov_table
+             WHERE created_at >= '{{ ds }}'::timestamp
+              AND created_at < '{{ ds }}'::timestamp + INTERVAL '1 days';
+        """
+
+query2="""
+            SELECT COUNT(1)
+              FROM vildan_agg_table
              WHERE created_at >= '{{ ds }}'::timestamp
               AND created_at < '{{ ds }}'::timestamp + INTERVAL '1 days';
         """
@@ -146,7 +153,7 @@ with DAG(
     )
     sql_sensor = SqlSensor(
         task_id='sql_sensor',
-        sql= {'query_sql':query},
+        sql= {'query_1':query1,'query_2':query2},
         mode='reschedule',
         poke_interval=300,
     )
