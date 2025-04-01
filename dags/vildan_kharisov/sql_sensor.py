@@ -26,9 +26,9 @@ class SqlSensor(BaseSensorOperator):
         ) as conn:
             cursor = conn.cursor()
 
-            self.log.info(self.sql)
+            self.log.info(self.sql['query_sql'])
 
-            cursor.execute(self.sql)
+            cursor.execute(self.sql['query_sql'])
             result = cursor.fetchone()
 
         if result[0] > 0:
