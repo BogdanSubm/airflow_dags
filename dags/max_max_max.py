@@ -10,7 +10,7 @@ DEFAULT_ARGS = {
     'owner': 'admin', # Владелец DAG
     'retries': 2, # Кол-во повторов
     'retry_delay': 600, # Задержка перед повтором
-    'start_date': datetime(2025, 4, 11), # Дата начала выполнения
+    'start_date': datetime(2025, 4, 5), # Дата начала выполнения
 }
 
 API_URL = "https://b2b.itresume.ru/api/statistics"
