@@ -63,7 +63,7 @@ def load_from_api(**context):
 
 # Создание DAG
 with DAG(
-    dag_id="makshalilow@yandex.ru", # Идентификатор DAG
+    dag_id="max_khalilov_dag", # Изменено с email на допустимый формат
     tags=['7', 'max'], # Теги. По ним можно так же находить DAG
     schedule='@daily', # Расписание выполнения
     default_args=DEFAULT_ARGS, # Параметры по умолчанию
