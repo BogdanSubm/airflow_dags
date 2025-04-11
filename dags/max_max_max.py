@@ -47,7 +47,7 @@ def load_from_api(**context):
 
         for el in data: # Проходим по всем элементам словаря
             row = [] # Создаём список для строки
-            passback_params = ast.literal_eval(el.get('passback_params', '{}')) # Преобразуем строку в словарь
+            passback_params = ast.literal_eval(el.get('passback_params') if el.get('passback_params') else '{}') # Преобразуем строку в словарь
             row.append(el.get('lti_user_id')) # Добавляем в список значение из словаря
             row.append(True if el.get('is_correct') == 1 else False) # Добавляем в список значение из словаря
             row.append(el.get('attempt_type')) # Добавляем в список значение из словаря
