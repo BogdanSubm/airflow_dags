@@ -30,7 +30,6 @@ def load_from_api(**context):
     start_str = start_of_week.strftime('%Y-%m-%d')
     end_str = end_of_week.strftime('%Y-%m-%d')
 
-    print(f"Запрашиваем данные с {start_str} по {end_str}")
 
     payload = {
         'client': 'Skillfactory',
@@ -38,11 +37,9 @@ def load_from_api(**context):
         'start': start_str,
         'end': end_str
     }
-    print(f"Параметры запроса к API: {payload}")
 
     response = requests.get(API_URL, params=payload)
     data = response.json()
-    print(f"Получено записей от API: {len(data)}")
 
     connection = BaseHook.get_connection('conn_pg')
 
@@ -62,10 +59,8 @@ def load_from_api(**context):
         # Проверка количества записей до очистки
         cursor.execute("SELECT COUNT(*) FROM maks_khalilov")
         count_before = cursor.fetchone()[0]
-        print(f"Записей в таблице до очистки: {count_before}")
 
         cursor.execute("TRUNCATE TABLE maks_khalilov")
-        print("Таблица очищена")
     
         for el in data:
             row = []
@@ -80,14 +75,42 @@ def load_from_api(**context):
 
             cursor.execute("INSERT INTO maks_khalilov VALUES (%s, %s, %s, %s, %s, %s, %s)", row)
 
-        # Проверка после вставки
-        cursor.execute("SELECT COUNT(*) FROM maks_khalilov")
-        count_after = cursor.fetchone()[0]
-        print(f"Записей в таблице после вставки: {count_after}")
-
         conn.commit()
-        print("Изменения зафиксированы (commit выполнен)")
 
+def agr_func(**context):
+    import psycopg2 as pg
+
+    sql_query = f"""
+        INSERT INTO maks_khalilov_agr
+        SELECT 
+            lti_user_id,
+            attempt_type,
+            COUNT(CASE WHEN is_correct THEN 1 END) AS cnt_correct,
+            COUNT(CASE WHEN NOT is_correct THEN 1 END) AS cnt_fails,
+            COUNT(*) AS cnt_attempts
+        FROM maks_khalilov
+        GROUP BY 1, 2;
+    """
+
+    connection = BaseHook.get_connection('conn_pg')
+
+    with pg.connect(
+        dbname='etl',
+        sslmode='disable',
+        user=connection.login,
+        password=connection.password,
+        host=connection.host,
+        port=connection.port,
+        connect_timeout=600,
+        keepalives_idle=600,
+        tcp_user_timeout=600
+    ) as conn:
+        cursor = conn.cursor()
+        cursor.execute("TRUNCATE TABLE maks_khalilov_agr")
+        cursor.execute(sql_query)
+        conn.commit()
+            
+            
 with DAG(
     dag_id='makskhalilowyandexru',
     tags=['7', 'homework', 'max'],
@@ -105,4 +128,9 @@ with DAG(
         python_callable=load_from_api
     )
 
-    dag_start >> load_from_api >> dag_end
+    agr_func = PythonOperator(
+        task_id='agr_func',
+        python_callable=agr_func
+    )
+
+    dag_start >> load_from_api >> agr_func >> dag_end
