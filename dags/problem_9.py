@@ -27,14 +27,22 @@ def load_from_api(**context):
     start_str = start_of_week.strftime('%Y-%m-%d')
     end_str = end_of_week.strftime('%Y-%m-%d')
 
+    # Проверка дат
+    print(f"Запрашиваем данные с {start_str} по {end_str}")
+
     payload = {
         'client': 'Skillfactory',
         'client_key': 'M2MGWS',
         'start': start_str,
         'end': end_str
     }
+    # Проверка параметров запроса
+    print(f"Параметры запроса к API: {payload}")
+
     response = requests.get(API_URL, params=payload)
     data = response.json()
+    # Проверка полученных данных
+    print(f"Получено записей от API: {len(data)}")
 
     connection = BaseHook.get_connection('conn_pg')
 
@@ -51,7 +59,13 @@ def load_from_api(**context):
     ) as conn:
         cursor = conn.cursor()
 
+        # Проверка количества записей до очистки
+        cursor.execute("SELECT COUNT(*) FROM maks_khalilov")
+        count_before = cursor.fetchone()[0]
+        print(f"Записей в таблице до очистки: {count_before}")
+
         cursor.execute("TRUNCATE TABLE maks_khalilov")
+        print("Таблица очищена")
     
         for el in data:
             row = []
@@ -64,9 +78,15 @@ def load_from_api(**context):
             row.append(passback_params.get('lis_result_sourcedid'))
             row.append(passback_params.get('lis_outcome_service_url'))
 
-            cursor.execute("INSERT INTO maks_khalilov VALUES (%s, %s, %s, %s, %s, %s, %s)",row)
+            cursor.execute("INSERT INTO maks_khalilov VALUES (%s, %s, %s, %s, %s, %s, %s)", row)
 
-        conn.commit() # Сохранение изменений в базе данных
+        # Проверка после вставки
+        cursor.execute("SELECT COUNT(*) FROM maks_khalilov")
+        count_after = cursor.fetchone()[0]
+        print(f"Записей в таблице после вставки: {count_after}")
+
+        conn.commit()
+        print("Изменения зафиксированы (commit выполнен)")
 
 with DAG(
     dag_id='makskhalilowyandexru',
