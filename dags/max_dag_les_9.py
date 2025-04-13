@@ -85,16 +85,15 @@ def combine_data(**context):
 
     sql_query = f"""
         INSERT INTO admin_agg_table
-        SELECT 
-            lti_user_id,
-            attempt_type,
-            COUNT(1), -- Количество попыток (всех)
-            COUNT(CASE WHEN is_correct THEN NULL ELSE 1 END) AS attempt_fails_count, -- Количество попыток (неправильных)
-            '{context['ds']}'::timestamp
-        FROM admin_agg_table
-        WHERE created_at >= '{context['ds']}'::timestamp
-            AND created_at < '{context['ds']}'::timestamp + INTERVAL '1 days' -- Данным интервалом запроса мы берем 1 день. Но чтобы получить данные за 1 день, можно было бы сделать приравнивание, НО не стоит этого делать, потому что процесс очень сильно замедлится (особенно на продакшине), и так же не стоит писать по вермени до 23:59:59, так как запись производиться может в долях секунды, и мы что-то потеряем.
-        GROUP BY 1, 2;
+        SELECT lti_user_id,
+               attempt_type,
+               COUNT(1),
+               COUNT(CASE WHEN is_correct THEN NULL ELSE 1 END) AS attempt_fails_count,
+               '{context['ds']}'::timestamp
+          FROM admin_table
+         WHERE created_at >= '{context['ds']}'::timestamp
+               AND created_at < '{context['ds']}'::timestamp + INTERVAL '1 days'
+         GROUP BY lti_user_id, attempt_type;
     """
 
     connection = BaseHook.get_connection('conn_pg') # Получаем соединение с базой данных (эти данные находятся в Airflow во вкладке Connections)
