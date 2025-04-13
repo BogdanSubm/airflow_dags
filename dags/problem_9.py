@@ -141,9 +141,7 @@ def upload_to_s3(**context):
         data = cursor.fetchall()
 
     file = BytesIO()
-
     writer_wrapper = codecs.getwriter('utf-8')
-
     writer = csv.writer(
         writer_wrapper(file),
         delimiter='\t',
@@ -171,6 +169,64 @@ def upload_to_s3(**context):
         Key=f"max_khalilov_{context['ds']}.csv"
     )
 
+def upload_raw_to_s3(**context):
+    import psycopg2 as pg
+    from io import BytesIO
+    import csv
+    import boto3 as s3
+    from botocore.client import Config
+    import codecs
+
+    sql_query = """
+        SELECT * FROM maks_khalilov
+    """
+
+    connection = BaseHook.get_connection('conn_pg')
+
+    with pg.connect(
+        dbname='etl',
+        sslmode='disable',
+        user=connection.login,
+        password=connection.password,
+        host=connection.host,
+        port=connection.port,
+        connect_timeout=600,
+        keepalives_idle=600,
+        tcp_user_timeout=600
+    ) as conn:
+        cursor = conn.cursor()
+        cursor.execute(sql_query)
+        data = cursor.fetchall()
+
+    file = BytesIO()
+    writer_wrapper = codecs.getwriter('utf-8')
+    writer = csv.writer(
+        writer_wrapper(file),
+        delimiter='\t',
+        lineterminator='\n',
+        quotechar='"',
+        quoting=csv.QUOTE_MINIMAL
+    )
+
+    writer.writerows(data)
+    file.seek(0)
+
+    connection = BaseHook.get_connection('conn_s3')
+
+    s3_client = s3.client(
+        's3',
+        endpoint_url=connection.host,
+        aws_access_key_id=connection.login,
+        aws_secret_access_key=connection.password,
+        config=Config(signature_version='s3v4')
+    )
+
+    s3_client.put_object(
+        Body=file,
+        Bucket='default-storage',
+        Key=f"max_khalilov_raw_{context['ds']}.csv"
+    )
+
             
 with DAG(
     dag_id='makskhalilowyandexru',
@@ -182,7 +238,7 @@ with DAG(
 ) as dag:
     
     dag_start = EmptyOperator(task_id='dag_start')
-    dag_end= EmptyOperator(task_id='dag_end')
+    dag_end = EmptyOperator(task_id='dag_end')
 
     load_from_api = PythonOperator(
         task_id='load_from_api',
@@ -199,4 +255,10 @@ with DAG(
         python_callable=upload_to_s3
     )
 
+    upload_raw_data = PythonOperator(
+        task_id='upload_raw_data',
+        python_callable=upload_raw_to_s3
+    )
+
     dag_start >> load_from_api >> agr_func >> upload_data >> dag_end
+    dag_start >> load_from_api >> upload_raw_data >> dag_end
