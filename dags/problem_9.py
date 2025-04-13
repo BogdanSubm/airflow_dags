@@ -42,7 +42,7 @@ def load_from_api(**context):
         dbname='etl',
         sslmode='disable',
         user=connection.login,
-        pawword=connection.password,
+        password=connection.password,
         host=connection.host,
         port=connection.port,
         connect_timeout=600,
