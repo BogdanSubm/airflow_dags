@@ -20,14 +20,16 @@ def load_from_api(**context):
     import ast 
 
     execution_date = context['execution_date']
+    # Получаем начало недели (понедельник)
     start_of_week = execution_date - timedelta(days=execution_date.weekday())
     start_of_week = start_of_week.replace(hour=0, minute=0, second=0, microsecond=0)
-    end_of_week = start_of_week + timedelta(hours=6, minutes=59, seconds=59)
+    # Получаем конец недели (воскресенье)
+    end_of_week = start_of_week + timedelta(days=6)
+    end_of_week = end_of_week.replace(hour=23, minute=59, second=59)
 
     start_str = start_of_week.strftime('%Y-%m-%d')
     end_str = end_of_week.strftime('%Y-%m-%d')
 
-    # Проверка дат
     print(f"Запрашиваем данные с {start_str} по {end_str}")
 
     payload = {
@@ -36,12 +38,10 @@ def load_from_api(**context):
         'start': start_str,
         'end': end_str
     }
-    # Проверка параметров запроса
     print(f"Параметры запроса к API: {payload}")
 
     response = requests.get(API_URL, params=payload)
     data = response.json()
-    # Проверка полученных данных
     print(f"Получено записей от API: {len(data)}")
 
     connection = BaseHook.get_connection('conn_pg')
