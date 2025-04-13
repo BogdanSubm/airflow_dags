@@ -36,8 +36,8 @@ def upload_data(**context):
         password=connection.password,
         host=connection.host,
         port=connection.port,
-        connection_timeout=600,
-        keepalives=600,
+        connect_timeout=600,
+        keepalives_idle=600,
         tcp_user_timeout=600
     ) as conn:
         cursor = conn.cursor() # Создаем курсор 
@@ -100,15 +100,15 @@ def combine_data(**context):
     connection = BaseHook.get_connection('conn_pg') # Получаем соединение с базой данных (эти данные находятся в Airflow во вкладке Connections)
     # Создаем соединение с базой данных
     with pg.connect(
-        dbname='etl', # Название базы данных
-        sslmode='disable', # Режим шифрования
-        user=connection.login, # Логин
-        password=connection.password, # Пароль
-        host=connection.host, # Хост
-        port=connection.port, # Порт
-        connection_timeout=600, # Таймаут соединения
-        keepalives=600, # Таймаут соединения
-        tcp_user_timeout=600 # Таймаут соединения
+        dbname='etl',
+        sslmode='disable',
+        user=connection.login,
+        password=connection.password,
+        host=connection.host,
+        port=connection.port,
+        connect_timeout=600,
+        keepalives_idle=600,
+        tcp_user_timeout=600
     ) as conn:
         cursor = conn.cursor() # Создаем курсор
         cursor.execute(sql_query) # Выполняем запрос
