@@ -86,7 +86,7 @@ def agr_func(**context):
             lti_user_id,
             attempt_type,
             COUNT(CASE WHEN is_correct THEN 1 END) AS cnt_correct,
-            COUNT(CASE WHEN is_correct THEN NULL ELSE 1 END) AS cnt_fails,
+            COUNT(CASE WHEN is_correct THEN NULL ELSE 1 END) as attempt_fails_count,
             COUNT(*) AS cnt_attempts
         FROM maks_khalilov
         GROUP BY 1, 2;
@@ -110,6 +110,67 @@ def agr_func(**context):
         cursor.execute(sql_query)
         conn.commit()
             
+
+def upload_to_s3(**context):
+    import psycopg2 as pg
+    from io import BytesIO
+    import csv
+    import boto3 as s3
+    from botocore.client import Config
+    import codecs
+
+    sql_query = f"""
+        SELECT * FROM maks_khalilov_agr
+    """
+
+    connection = BaseHook.get_connection('conn_pg')
+
+    with pg.connect(
+        dbname='etl',
+        sslmode='disable',
+        user=connection.login,
+        password=connection.password,
+        host=connection.host,
+        port=connection.port,
+        connect_timeout=600,
+        keepalives_idle=600,
+        tcp_user_timeout=600
+    ) as conn:
+        cursor = conn.cursor()
+        cursor.execute(sql_query)
+        data = cursor.fetchall()
+
+    file = BytesIO()
+
+    writer_wrapper = codecs.getwriter('utf-8')
+
+    writer = csv.writer(
+        writer_wrapper(file),
+        delimiter='\t',
+        lineterminator='\n',
+        quotechar='"',
+        quoting=csv.QUOTE_MINIMAL
+    )
+
+    writer.writerows(data)
+    file.seek(0)
+
+    connection = BaseHook.get_connection('conn_s3')
+
+    s3_client = s3.client(
+        's3',
+        endpoint_url=connection.host,
+        aws_access_key_id=connection.login,
+        aws_secret_access_key=connection.password,
+        config=Config(signature_version='s3v4')
+    )
+
+    s3_client.put_object(
+        Body=file,
+        Bucket='default-storage',
+        Key=f"max_khalilov_{context['ds']}.csv"
+    )
+
             
 with DAG(
     dag_id='makskhalilowyandexru',
@@ -133,4 +194,9 @@ with DAG(
         python_callable=agr_func
     )
 
-    dag_start >> load_from_api >> agr_func >> dag_end
+    upload_data = PythonOperator(
+        task_id='upload_data',
+        python_callable=upload_to_s3
+    )
+
+    dag_start >> load_from_api >> agr_func >> upload_data >> dag_end
