@@ -80,13 +80,13 @@ def load_from_api(**context):
 def agr_func(**context):
     import psycopg2 as pg
 
-    sql_query = f"""
+    sql_query = """
         INSERT INTO maks_khalilov_agr
         SELECT 
             lti_user_id,
             attempt_type,
             COUNT(CASE WHEN is_correct THEN 1 END) AS cnt_correct,
-            COUNT(CASE WHEN NOT is_correct THEN 1 END) AS cnt_fails,
+            COUNT(CASE WHEN is_correct THEN NULL ELSE 1 END) AS cnt_fails,
             COUNT(*) AS cnt_attempts
         FROM maks_khalilov
         GROUP BY 1, 2;
