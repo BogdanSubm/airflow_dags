@@ -148,7 +148,7 @@ with DAG(
                    attempt_type,
                    COUNT(1),
                    COUNT(CASE WHEN is_correct THEN NULL ELSE 1 END) AS attempt_fails_count,
-                   '{{ ds }}'::timestamp
+                   COUNT(*) AS cnt_attempts
               FROM admin_table
              WHERE created_at >= '{{ current_week_start(ds) }}'::timestamp
                    AND created_at < '{{ current_week_end(ds) }}'::timestamp + INTERVAL '1 days'
