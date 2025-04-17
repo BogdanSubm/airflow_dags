@@ -87,7 +87,7 @@ def combine_data(week_start: str, week_end: str, execution_date: str):
 
     # Используем week_start и week_end для агрегации данных за неделю
     sql_query = f"""
-        INSERT INTO admin_agg_table
+        INSERT INTO maks_khalilov_agr
         SELECT lti_user_id,
                attempt_type,
                COUNT(1),
@@ -112,6 +112,7 @@ def combine_data(week_start: str, week_end: str, execution_date: str):
         tcp_user_timeout=600
     ) as conn:
         cursor = conn.cursor()
+        cursor.execute("TRUNCATE TABLE maks_khalilov_agr")
         cursor.execute(sql_query)
         conn.commit()
 
