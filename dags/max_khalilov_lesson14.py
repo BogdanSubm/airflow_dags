@@ -12,7 +12,7 @@ from upload_data_operator_max_khalilov import CustomUploadDataOperator
 
 DEFAULT_ARGS = {
     'owner': 'admin',
-    'retires': 2,
+    'retries': 2,
     'retry_delay': 600,
     'start_date': datetime(2025, 4, 14)
 }
