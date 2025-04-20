@@ -127,7 +127,7 @@ with DAG(
 ) as dag:
     
     start_dag = EmptyOperator(task_id='start_dag')
-    end_dag = EmptyOperator(task_id='end_dag')
+    end_dagg = EmptyOperator(task_id='end_dag')
 
     api_to_postgres = ApiToPostgresOperator(
         task_id='api_to_postgres',
@@ -144,4 +144,4 @@ with DAG(
         python_callable=upload_data,
     )  
 
-    start_dag >> api_to_postgres >> combine_data >> upload_data >> end_dag
+    start_dag >> api_to_postgres >> combine_data >> upload_data >> end_dagg
