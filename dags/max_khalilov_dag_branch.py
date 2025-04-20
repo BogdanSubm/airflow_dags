@@ -23,7 +23,7 @@ with DAG(
 ) as dag:
     
     dag_start = EmptyOperator(task_id='dag_start')
-    dag_enddd = EmptyOperator(task_id='dag_end')
+    dag_end = EmptyOperator(task_id='dag_end')
 
     branch = CustomBranchOperator(
         task_id='branch', 
@@ -35,4 +35,4 @@ with DAG(
         date_to='{{ macros.ds_add(ds, 1) }}',
     )
 
-    dag_start >> branch >> load_from_api >> dag_enddd
+    dag_start >> branch >> load_from_api >> dag_end
