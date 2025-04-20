@@ -3,8 +3,8 @@ from datetime import datetime
 from airflow import DAG
 from airflow.operators.empty import EmptyOperator
 
-from dags.max_khalilov_branch_operator import CustomBranchOperator
-from dags.api_operator_max_khalilov import ApiToPostgresOperator
+from max_khalilov_branch_operator import CustomBranchOperator
+from api_operator_max_khalilov import ApiToPostgresOperator
 
 DEFAULT_ARGS = {
     'owner': 'admin',
