@@ -4,7 +4,7 @@ import pendulum # Библиотека для работы с датами
 from airflow.exceptions import AirflowException # Исключение для Airflow
 from airflow.models import BaseOperator, SkipMixin # Базовый класс для всех операторов и класс для пропуска задачи
 
-class CUstomBranchOperator(BaseOperator, SkipMixin):
+class CustomBranchOperator(BaseOperator, SkipMixin):
 
     def __init__(self, **kwargs):
         super.__init__(**kwargs) # Вызываем конструктор родительского класса
