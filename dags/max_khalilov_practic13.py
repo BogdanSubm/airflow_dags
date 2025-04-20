@@ -83,7 +83,7 @@ def load_from_api(**context):
 
 
 with DAG(
-    dag_id='max_khalilov_lesson14',
+    dag_id='max_khalilov_practic13',
     tags=['max_khalilov', '7'],
     default_args=DEFAULT_ARGS,
     schedule='@daily',
