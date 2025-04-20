@@ -24,7 +24,7 @@ def upload_data(**context):
     import codecs # Библиотека для работы с кодировками
 
     sql_query = f"""
-        SELECT * FROM maks_khalilov
+        SELECT * FROM maks_khalilov_agr
         WHERE date >= '{context['ds']}'::timestamp
             AND date < '{context['ds']}'::timestamp + INTERVAL '1 days';
     """
