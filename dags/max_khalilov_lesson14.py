@@ -92,7 +92,7 @@ with DAG(
 ) as dag:
     
     start_dag = EmptyOperator(task_id='start_dag')
-    end_dag = EmptyOperator(task_id='end_dag')
+    end_dagg = EmptyOperator(task_id='end_dag')
 
     load_from_api = PythonOperator(
         task_id='load_from_api',
@@ -107,7 +107,7 @@ with DAG(
         task_id='upload_data',
     )
 
-    start_dag >> load_from_api >> combine_data >> upload_data >> end_dag 
+    start_dag >> load_from_api >> combine_data >> upload_data >> end_dagg
 
 
 
