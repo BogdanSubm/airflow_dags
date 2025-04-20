@@ -12,7 +12,7 @@ from upload_data_operator_max_khalilov import CustomUploadDataOperator
 
 DEFAULT_ARGS = {
     'owner': 'admin',
-    'retires': 2,
+    'retries': 2,
     'retry_delay': 600,
     'start_date': datetime(2025, 4, 14)
 }
@@ -31,16 +31,12 @@ with DAG(
 
     combine_data = CustomCombineDataOperator(
         task_id='combine_data',
-        date_from='{{ ds }}',
-        date_to='{{ next_ds }}'
     )
 
     upload_data = CustomUploadDataOperator(
         task_id='upload_data',
-        date_from='{{ ds }}',
-        date_to='{{ next_ds }}'
     )
-    
+
     start_dag >> combine_data >> upload_data >> end_dag 
 
 
