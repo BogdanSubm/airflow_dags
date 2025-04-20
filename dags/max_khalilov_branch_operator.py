@@ -7,7 +7,7 @@ from airflow.models import BaseOperator, SkipMixin # Базовый класс �
 class CustomBranchOperator(BaseOperator, SkipMixin):
 
     def __init__(self, **kwargs):
-        super.__init__(**kwargs) # Вызываем конструктор родительского класса
+        super().__init__(**kwargs) # Вызываем конструктор родительского класса
 
     def execute(self, context: Any): # Any - это тип данных для переменных, т е любой тип данных
         df = pendulum.parse(context['ds'])
