@@ -19,7 +19,7 @@ class CustomCombineDataOperator(BaseOperator):
                 COUNT(1),
                 COUNT(CASE WHEN is_correct THEN NULL ELSE 1 END) AS attempt_fails_count,
                 '{context['ds']}'::timestamp
-            FROM max_api_table
+            FROM maks_khalilov
             WHERE created_at >= '{context['ds']}'::timestamp
                 AND created_at < '{context['ds']}'::timestamp + INTERVAL '1 days'
             GROUP BY lti_user_id, attempt_type;
