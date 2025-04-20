@@ -5,6 +5,8 @@ from airflow.hooks.base import BaseHook
 
 from datetime import datetime
 
+from operators.api_operator_max_khalilov import ApiToPostgresOperator
+
 # Параметры по умолчанию (константы)
 DEFAULT_ARGS = {
     'owner': 'admin', # Владелец DAG
@@ -22,7 +24,7 @@ def upload_data(**context):
     import codecs # Библиотека для работы с кодировками
 
     sql_query = f"""
-        SELECT * FROM admin_agg_table
+        SELECT * FROM maks_khalilov
         WHERE date >= '{context['ds']}'::timestamp
             AND date < '{context['ds']}'::timestamp + INTERVAL '1 days';
     """
@@ -84,13 +86,14 @@ def combine_data(**context):
     import psycopg2 as pg
 
     sql_query = f"""
-        INSERT INTO admin_agg_table
+        TRUNCATE TABLE maks_khalilov_agr;
+        INSERT INTO maks_khalilov_agr
         SELECT lti_user_id,
                attempt_type,
                COUNT(1),
                COUNT(CASE WHEN is_correct THEN NULL ELSE 1 END) AS attempt_fails_count,
                '{context['ds']}'::timestamp
-          FROM admin_table
+          FROM max_api_table
          WHERE created_at >= '{context['ds']}'::timestamp
                AND created_at < '{context['ds']}'::timestamp + INTERVAL '1 days'
          GROUP BY lti_user_id, attempt_type;
@@ -126,6 +129,11 @@ with DAG(
     start_dag = EmptyOperator(task_id='start_dag')
     end_dag = EmptyOperator(task_id='end_dag')
 
+    api_to_postgres = ApiToPostgresOperator(
+        task_id='api_to_postgres',
+        date_from='{{ ds }}', # {{ ds }} - это переменная, которая содержит дату выполнения задачи. Это template jinja.
+        date_to='{{ next_ds}}',
+    )
     combine_data = PythonOperator( # Объединение данных
         task_id='combine_data',
         python_callable=combine_data,
@@ -136,4 +144,4 @@ with DAG(
         python_callable=upload_data,
     )  
 
-    start_dag >> combine_data >> upload_data >> end_dag
+    start_dag >> api_to_postgres >> combine_data >> upload_data >> end_dag
