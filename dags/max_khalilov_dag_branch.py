@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from arflow import DAG
+from airflow import DAG
 from airflow.operator.empty import EmpteOperator
 
 from operators.max_khalilov_branch_operator import CustomBranchOperator
