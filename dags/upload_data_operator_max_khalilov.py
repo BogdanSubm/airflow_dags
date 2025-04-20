@@ -14,7 +14,7 @@ class CustomUploadDataOperator(BaseOperator):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    def execute(self, **context: Any):
+    def execute(self, context: Any):
         sql_query = f"""
             SELECT * FROM maks_khalilov_agr
             WHERE date >= '{context['ds']}'::timestamp
