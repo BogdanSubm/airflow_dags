@@ -3,7 +3,7 @@ from datetime import datetime
 from airflow import DAG
 from airflow.operators.empty import EmptyOperator
 
-from max_khalilov_branch_operator import CustomBranchOperator
+from branch import CustomBranchOperator
 from api_operator_max_khalilov import ApiToPostgresOperator
 
 DEFAULT_ARGS = {
