@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from airflow import DAG
-from airflow.operator.empty import EmpteOperator
+from airflow.operators.empty import EmptyOperator
 
 from operators.max_khalilov_branch_operator import CustomBranchOperator
 from operators.api_operator_max_khalilov import ApiToPostgresOperator
