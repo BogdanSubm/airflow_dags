@@ -5,7 +5,7 @@ from airflow.hooks.base import BaseHook
 from datetime import datetime, timedelta
 
 # Параметры по умолчанию
-DEFAULT_ARGS = {
+DEFAULT_ARGS = {     
     'owner': 'admin',
     'retries': 2,
     'retry_delay': 600,
