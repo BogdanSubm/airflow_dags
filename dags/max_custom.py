@@ -55,7 +55,7 @@ with DAG(
         },
         op_kwargs={
             'week_start': '{{ current_week_start(ds, params.type) }}', # Параметры функции. Фигурные скобки это и есть template. Но таких в базе мы не встретим, они кастомные.
-            'week_end': '{{ current_week_end(ds)}}',
+            'week_end': '{{ current_week_end(ds) }}',
         }
     )
 
