@@ -31,16 +31,12 @@ with DAG(
 
     combine_data = CustomCombineDataOperator(
         task_id='combine_data',
-        date_from='{{ ds }}',
-        date_to='{{ next_ds }}'
     )
 
     upload_data = CustomUploadDataOperator(
         task_id='upload_data',
-        date_from='{{ ds }}',
-        date_to='{{ next_ds }}'
     )
-    
+
     start_dag >> combine_data >> upload_data >> end_dag 
 
 
