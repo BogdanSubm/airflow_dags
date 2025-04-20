@@ -5,13 +5,13 @@ from airflow.hooks.base import BaseHook
 
 from datetime import datetime
 
-from operators.api_operator_max_khalilov import ApiToPostgresOperator
+from api_operator_max_khalilov import ApiToPostgresOperator # Импортируем оператор для загрузки данных из API в базу данных
 
 # Параметры по умолчанию (константы)
 DEFAULT_ARGS = {
     'owner': 'admin', # Владелец DAG
     'retries': 2,
-    'retry_delay': 600,
+    'retry_delay': 600, 
     'start_date': datetime(2025, 4, 12)
 }
 
