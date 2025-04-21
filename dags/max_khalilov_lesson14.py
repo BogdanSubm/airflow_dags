@@ -49,9 +49,9 @@ with DAG(
         task_id='max_khalilov_sql_sensor',
         sql="""
             SELECT COUNT(1)
-                FROM maks_khalilov
+              FROM maks_khalilov
             WHERE created_at >= '{{ ds }}'::timestamp
-                AND created_at < '{{ ds }}'::timestamp + INTERVAL '1 days';
+              AND created_at < '{{ ds }}'::timestamp + INTERVAL '1 days';
         """, # sql запрос, который будет проверяться. Фильтр where прописывается, чтобы проверять данные за последние 24 часа. И так как мы укази в template_fields ('sql',) то можно использовать {{ ds }}
         mode='reschedule', # Как будет работать датчик. Можно сказать обязательный параметр, потому что, если таска почему-то не выполняется и тд, она какбудто падает освобождая слот для другой таски, не занимая место.
         poke_interval=300, # Как часто будет проверяться датчик 
