@@ -7,8 +7,8 @@ from airflow.sensors.external_task import ExternalTaskSensor
 from airflow.sensors.time_delta import TimeDeltaSensor 
 from airflow.hooks.base import BaseHook
 
-from operator_combine_date_max_khalilov import CustomCombineDataOperator
-from upload_data_operator_max_khalilov import CustomUploadDataOperator
+from operators.operator_combine_date_max_khalilov import CustomCombineDataOperator
+from operators.upload_data_operator_max_khalilov import CustomUploadDataOperator
 
 DEFAULT_ARGS = {
     'owner': 'admin',
@@ -44,6 +44,18 @@ with DAG(
         poke_interval=300, # Как часто будет проверяться датчик
     )
 
+    sql_sensor = SqlSensor(
+        task_id='max_khalilov_sql_sensor',
+        sql="""
+            SELECT COUNT(1)
+                FROM maks_khalilov
+            WHERE created_at >= '{{ ds }}'::timestamp
+                AND created_at < '{{ ds }}'::timestamp + INTERVAL '1 days';
+        """, # sql запрос, который будет проверяться. Фильтр where прописывается, чтобы проверять данные за последние 24 часа. И так как мы укази в template_fields ('sql',) то можно использовать {{ ds }}
+        mode='reschedule', # Как будет работать датчик. Можно сказать обязательный параметр, потому что, если таска почему-то не выполняется и тд, она какбудто падает освобождая слот для другой таски, не занимая место.
+        poke_interval=300, # Как часто будет проверяться датчик 
+    )
+
     combine_data = CustomCombineDataOperator(
         task_id='combine_data',
     )
@@ -53,7 +65,7 @@ with DAG(
     )
 
     # Перенос тасков на другую строку можно сделать при помощи символа \. Т е данный вариант можно написать в одну строку
-    start_dag >> wait_3_msk >> dag_sensor >> \
+    start_dag >> wait_3_msk >> dag_sensor >> sql_sensor >>\
         combine_data >> upload_data >> end_dag
 
 
