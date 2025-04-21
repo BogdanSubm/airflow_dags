@@ -5,7 +5,7 @@ from airflow.hooks.base import BaseHook
 
 from datetime import datetime
 
-from api_operator_max_khalilov import ApiToPostgresOperator # Импортируем оператор для загрузки данных из API в базу данных
+from airflow_dags.dags.api_operator_max_khalilov import ApiToPostgresOperator # Импортируем оператор для загрузки данных из API в базу данных
 
 # Параметры по умолчанию (константы)
 DEFAULT_ARGS = {
@@ -132,7 +132,7 @@ with DAG(
     api_to_postgres = ApiToPostgresOperator(
         task_id='api_to_postgres',
         date_from='{{ ds }}', # {{ ds }} - это переменная, которая содержит дату выполнения задачи. Это template jinja.
-        date_to='{{ next_ds}}',
+        date_to='{{ next_ds }}',
     )
     combine_data = PythonOperator( # Объединение данных
         task_id='combine_data',

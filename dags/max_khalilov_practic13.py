@@ -7,8 +7,9 @@ from airflow.sensors.external_task import ExternalTaskSensor
 from airflow.sensors.time_delta import TimeDeltaSensor 
 from airflow.hooks.base import BaseHook
 
-from operator_combine_date_max_khalilov import CustomCombineDataOperator
-from upload_data_operator_max_khalilov import CustomUploadDataOperator
+from operators.operator_combine_date_max_khalilov import CustomCombineDataOperator
+from operators.upload_data_operator_max_khalilov import CustomUploadDataOperator
+from sensors.les_15_sensor_max_khalilov import SqlSensor
 
 DEFAULT_ARGS = {
     'owner': 'admin',

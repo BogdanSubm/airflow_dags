@@ -10,7 +10,7 @@ class CustomBranchOperator(BaseOperator, SkipMixin):
         super().__init__(**kwargs) # Вызываем конструктор родительского класса
 
     def execute(self, context: Any): # Any - это тип данных для переменных, т е любой тип данных
-        df = pendulum.parse(context['ds'])
+        df = pendulum.parse(context['ds']) # Преобразуем строку в дату
 
         tasks_to_execute = []
 
