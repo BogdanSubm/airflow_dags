@@ -25,7 +25,7 @@ class SqlSensor(BaseSensorOperator):
         ) as conn:
             cursor = conn.cursor() # Создаем курсор 
             cursor.execute(self.sql) # Выполняем запрос
-            data = cursor.fetchall() # Получаем данные
+            result = cursor.fetchall() # Получаем данные
 
         if result[0] > 0:
             return True
