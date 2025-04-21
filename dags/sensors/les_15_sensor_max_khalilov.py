@@ -19,13 +19,13 @@ class SqlSensor(BaseSensorOperator):
             password=connection.password,
             host=connection.host,
             port=connection.port,
-            connection_timeout=600,
-            keepalives_idle=600, 
-            tcp_user_timeout=600 
+            connect_timeout=600,
+            keepalives_idle=600,
+            tcp_user_timeout=600
         ) as conn:
-            cursor = conn.cursor()
-            cursor.execute(self.sql)
-            result = cursor.fetchone()
+            cursor = conn.cursor() # Создаем курсор 
+            cursor.execute(sql_query) # Выполняем запрос
+            data = cursor.fetchall() # Получаем данные
 
         if result[0] > 0:
             return True
