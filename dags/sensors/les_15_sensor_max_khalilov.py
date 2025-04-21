@@ -24,7 +24,7 @@ class SqlSensor(BaseSensorOperator):
             tcp_user_timeout=600
         ) as conn:
             cursor = conn.cursor() # Создаем курсор 
-            cursor.execute(sql_query) # Выполняем запрос
+            cursor.execute(self.sql) # Выполняем запрос
             data = cursor.fetchall() # Получаем данные
 
         if result[0] > 0:
