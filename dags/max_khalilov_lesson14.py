@@ -9,6 +9,7 @@ from airflow.hooks.base import BaseHook
 
 from operators.operator_combine_date_max_khalilov import CustomCombineDataOperator
 from operators.upload_data_operator_max_khalilov import CustomUploadDataOperator
+from sensors.les_15_sensor_max_khalilov import SqlSensor
 
 DEFAULT_ARGS = {
     'owner': 'admin',
