@@ -9,6 +9,7 @@ from airflow.hooks.base import BaseHook
 
 from operators.operator_combine_date_max_khalilov import CustomCombineDataOperator
 from operators.upload_data_operator_max_khalilov import CustomUploadDataOperator
+from sensors.les_15_sensor_max_khalilov import SqlSensor
 
 DEFAULT_ARGS = {
     'owner': 'admin',
@@ -27,7 +28,7 @@ with DAG(
 ) as dag:
     
     start_dag = EmptyOperator(task_id='start_dag')
-    end_dag = EmptyOperator(task_id='end_dag')
+    end_dagg = EmptyOperator(task_id='end_dag')
 
     wait_3_msk = TimeDeltaSensor(
         task_id='wait_3_msk', 
@@ -66,7 +67,7 @@ with DAG(
 
     # Перенос тасков на другую строку можно сделать при помощи символа \. Т е данный вариант можно написать в одну строку
     start_dag >> wait_3_msk >> dag_sensor >> sql_sensor >>\
-        combine_data >> upload_data >> end_dag
+        combine_data >> upload_data >> end_dagg
 
 
 
