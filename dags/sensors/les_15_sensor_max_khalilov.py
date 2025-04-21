@@ -24,6 +24,9 @@ class SqlSensor(BaseSensorOperator):
             tcp_user_timeout=600
         ) as conn:
             cursor = conn.cursor() # Создаем курсор 
+
+            self.log.info(self.sql) # Логирование sql запроса
+
             cursor.execute(self.sql) # Выполняем запрос
             result = cursor.fetchone() # Получаем данные. fetchone - получает одну строку
 
