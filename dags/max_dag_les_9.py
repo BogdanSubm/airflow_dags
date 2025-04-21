@@ -5,7 +5,7 @@ from airflow.hooks.base import BaseHook
 
 from datetime import datetime
 
-from airflow_dags.dags.api_operator_max_khalilov import ApiToPostgresOperator # Импортируем оператор для загрузки данных из API в базу данных
+from api_operator_max_khalilov import ApiToPostgresOperator # Импортируем оператор для загрузки данных из API в базу данных
 
 # Параметры по умолчанию (константы)
 DEFAULT_ARGS = {
