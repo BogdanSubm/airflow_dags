@@ -18,7 +18,7 @@ DEFAULT_ARGS = {
 }
 
 with DAG(
-    dag_id='max_khalilov_lesson14',
+    dag_id='max_khalilov_practic',
     tags=['max_khalilov', '7'],
     default_args=DEFAULT_ARGS,
     schedule='@daily',
