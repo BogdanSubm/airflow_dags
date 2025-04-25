@@ -26,7 +26,7 @@ with DAG(
     max_active_tasks=1
 ) as dag:
     
-    start_dag = EmptyOperator(task_id='start_dag')
+    start_dagg = EmptyOperator(task_id='start_dag')
     end_dagg = EmptyOperator(task_id='end_dag')
 
     wait_3_msk = TimeDeltaSensor(
@@ -39,7 +39,7 @@ with DAG(
     # Используем только MultiTableSqlSensor для проверки нескольких таблиц
     multi_table_sensor = MultiTableSqlSensor(
         task_id='max_khalilov_multi_table_sensor',
-        tables=['maks_halilov', 'max_api_table', 'maks_khalilov_agr'],  # список таблиц для проверки
+        tables=['maks_khalilov', 'max_api_table', 'maks_khalilov_agr'],  # список таблиц для проверки
         date_filter=True,  # использовать фильтр по дате
         mode='reschedule',  # как будет работать датчик
         poke_interval=300,  # как часто будет проверяться датчик
