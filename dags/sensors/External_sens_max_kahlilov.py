@@ -1,8 +1,6 @@
 import psycopg2 as pg
 from airflow.hooks.base import BaseHook
 from airflow.sensors.base import BaseSensorOperator
-from airflow.utils.decorators import apply_defaults
-from airflow.utils.context import Context
 
 class MultiTableSqlSensor(BaseSensorOperator):
     """
@@ -34,17 +32,17 @@ class MultiTableSqlSensor(BaseSensorOperator):
 
             for table in self.tables:
                 if self.date_filter:
+                    # Используем более чистый формат SQL-запроса
                     sql = f"""
                         SELECT COUNT(1)
                         FROM {table}
                         WHERE created_at >= '{context['ds']}'::timestamp
-                        AND created_at < '{context['ds']}'::timestamp + INTERVAL '1 days';
+                            AND created_at < '{context['ds']}'::timestamp + INTERVAL '1 day'
                     """
                 else:
-                    sql = f"SELECT COUNT(1) FROM {table};"
+                    sql = f"SELECT COUNT(1) FROM {table}"
                 
                 self.log.info(f"Проверка таблицы {table} с запросом: {sql}")
-                
                 cursor.execute(sql)
                 result = cursor.fetchone()
                 
