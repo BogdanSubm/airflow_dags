@@ -26,8 +26,8 @@ with DAG(
     max_active_tasks=1
 ) as dag:
     
-    start_dagg = EmptyOperator(task_id='start_dag')
-    end_dagg = EmptyOperator(task_id='end_dag')
+    start_dag = EmptyOperator(task_id='start_dag')
+    end_dag = EmptyOperator(task_id='end_dag')
 
     wait_3_msk = TimeDeltaSensor(
         task_id='wait_3_msk', 
@@ -54,4 +54,4 @@ with DAG(
     )
 
     # Обновляем последовательность задач, удаляя dag_sensor
-    start_dag >> wait_3_msk >> multi_table_sensor >> combine_data >> upload_data >> end_dagg
+    start_dag >> wait_3_msk >> multi_table_sensor >> combine_data >> upload_data >> end_dag
