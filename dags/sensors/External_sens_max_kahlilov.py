@@ -7,12 +7,13 @@ class MultiTableSqlSensor(BaseSensorOperator):
     Сенсор для проверки наличия данных в нескольких таблицах.
     Возвращает True только если все указанные таблицы содержат данные.
     """
-    template_fields = ('tables', )
+    template_fields = ('tables', 'sql')  # Добавляем 'sql' в template_fields
 
     def __init__(self, tables: list, date_filter: bool = True, **kwargs):
         super().__init__(**kwargs)
         self.tables = tables
         self.date_filter = date_filter
+        self.sql = None  # Добавляем атрибут для хранения SQL-запроса
 
     def poke(self, context) -> bool:
         connection = BaseHook.get_connection('conn_pg')
@@ -32,18 +33,17 @@ class MultiTableSqlSensor(BaseSensorOperator):
 
             for table in self.tables:
                 if self.date_filter:
-                    # Используем более чистый формат SQL-запроса
-                    sql = f"""
+                    self.sql = f"""
                         SELECT COUNT(1)
                         FROM {table}
-                        WHERE created_at >= '{context['ds']}'::timestamp
-                            AND created_at < '{context['ds']}'::timestamp + INTERVAL '1 day'
+                        WHERE created_at >= '{{ ds }}'::timestamp
+                        AND created_at < '{{ ds }}'::timestamp + INTERVAL '1 days'
                     """
                 else:
-                    sql = f"SELECT COUNT(1) FROM {table}"
+                    self.sql = f"SELECT COUNT(1) FROM {table}"
                 
-                self.log.info(f"Проверка таблицы {table} с запросом: {sql}")
-                cursor.execute(sql)
+                self.log.info(f"Проверка таблицы {table} с запросом: {self.sql}")
+                cursor.execute(self.sql)
                 result = cursor.fetchone()
                 
                 if result[0] <= 0:
