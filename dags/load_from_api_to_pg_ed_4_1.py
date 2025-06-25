@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from airflow import DAG
-from airflow.operators.empty import EmpyOperator
+from airflow.operators.empty import EmptyOperator
 from airflow.operators.python import PythonOperator
 from airflow.hooks.base import BaseHook
 
@@ -70,8 +70,8 @@ with DAG(
 
 ) as dag:
     
-    dag_start = EmpyOperator(task_id='dag_start')
-    dag_end = EmpyOperator(task_id='dag_end')
+    dag_start = EmptyOperator(task_id='dag_start')
+    dag_end = EmptyOperator(task_id='dag_end')
 
     load_from_api = PythonOperator(
         task_id='load_from_api',
