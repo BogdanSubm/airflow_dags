@@ -120,7 +120,7 @@ def load_data(**context):
     SELECT * FROM raw_data_ed WHERE created_at >= '{context["ds"]}'::TIMESTAMP AND created_at < '{context["ds"]}'::TIMESTAMP + INTERVAL '7 days'
 """
     sql_query2 = f"""
-    SELECT * FROM agg_data_ed WHERE data_start = '{context["ds"]}'
+    SELECT * FROM agg_data_ed WHERE date_start = '{context["ds"]}'
 """
     connection = BaseHook.get_connection('conn_pg')
 
