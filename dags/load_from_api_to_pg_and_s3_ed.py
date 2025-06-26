@@ -193,7 +193,8 @@ with DAG(
     dag_id="raw_api_data_and_data_ed",
     tags=["ed", "10"],
     schedule="@weekly",
-    default_args=DEFAULT_ARGS
+    default_args=DEFAULT_ARGS,
+    catchup=True,
     )as dag:
 
     # Определение tasks
