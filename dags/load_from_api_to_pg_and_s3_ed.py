@@ -198,7 +198,7 @@ with DAG(
 
     # Определение tasks
     start_dag = EmptyOperator(
-        taks_id="start_dag"
+        task_id="start_dag"
     )
 
     end_dag = EmptyOperator(
@@ -221,4 +221,3 @@ with DAG(
     )
 
     start_dag >> raw_data >> agg_data >> load_data >> end_dag
-
