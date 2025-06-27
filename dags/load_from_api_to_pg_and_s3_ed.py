@@ -13,7 +13,7 @@ DEFAULT_ARGS = {
     "owner": "ed",
     "retries": 2,
     "retry_delay": 600,
-    "start_date": datetime(2025, 6, 23),
+    "start_date": datetime(2025, 6, 16),
 }
 
 # Функция для загрузки данных по API в PG
