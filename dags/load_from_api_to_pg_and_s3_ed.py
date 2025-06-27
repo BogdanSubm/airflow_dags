@@ -50,8 +50,8 @@ def raw_data(**context):
         cursor = conn.cursor()
 
         for el in data:
-            start_date = datetime.strptime(context["ds"], "%Y-%m-%d") - timedelta(7)
-            end_date = datetime.strptime(f'{context["ds"]} 00:00:00', "%Y-%m-%d %H:%M:%S")
+            start_date = datetime.strptime(context["ds"], "%Y-%m-%d") + timedelta(days=0)
+            end_date = datetime.strptime(context["ds"], "%Y-%m-%d") + timedelta(days=7)
             created_at = el.get("created_at")
             created_at = datetime.strptime(created_at.split('.')[0], "%Y-%m-%d %H:%M:%S")
             if start_date <= created_at < end_date:
@@ -106,7 +106,7 @@ def agg_data(**context):
                 FROM
                     raw_data_ed
                 WHERE
-                    created_at >= %s::TIMESTAMP - INTERVAL '7 days' AND created_at < %s::TIMESTAMP
+                    created_at >= %s::TIMESTAMP AND created_at < %s::TIMESTAMP + INTERVAL '7 days'
                 GROUP BY
                     lti_user_id, attempt_type;
             """
@@ -122,7 +122,7 @@ def load_data(**context):
     import codecs
 
     sql_query1 = """
-    SELECT * FROM raw_data_ed WHERE created_at >= %s::TIMESTAMP - INTERVAL '7 days' AND created_at < %s::TIMESTAMP
+    SELECT * FROM raw_data_ed WHERE created_at >= %s::TIMESTAMP AND created_at < %s::TIMESTAMP + INTERVAL '7 days'
 """
     sql_query2 = """
     SELECT * FROM agg_data_ed WHERE date_start = %s
