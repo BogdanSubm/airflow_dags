@@ -171,6 +171,7 @@ def load_data(**context):
 
     connection = BaseHook.get_connection('conn_s3')
     s3_client = s3.client(
+        's3',
         endpoint_url=connection.host,
         aws_access_key_id=connection.login,
         aws_secret_access_key=connection.password,
