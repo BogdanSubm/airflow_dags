@@ -194,7 +194,7 @@ def load_data(**context):
 with DAG(
     dag_id="raw_api_data_and_data_ed",
     tags=["ed", "10"],
-    schedule="0 0 * * 1",
+    schedule_interval="0 0 * * 1",
     default_args=DEFAULT_ARGS,
     catchup=True,
     )as dag:
