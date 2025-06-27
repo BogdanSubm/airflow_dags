@@ -88,25 +88,25 @@ def agg_data(**context):
         
         cursor = conn.cursor()
         created_at2 = context["ds"]
-        cursor.execute("""SELECT 1 FROM agg_data_ed WHERE date_start = %s""", created_at2)
+        cursor.execute("""SELECT 1 FROM agg_data_ed WHERE date_start = %s""", (created_at2,))
         if not cursor.fetchone():
-            sql_query = f"""
+            sql_query = """
                 INSERT INTO agg_data_ed
                 SELECT
                     lti_user_id,
                     attempt_type,
-                    '{context["ds"]}' AS date_start,
+                    %s AS date_start,
                     COUNT(is_correct) AS attempt_count,
                     SUM(CASE WHEN is_correct THEN 1 ELSE 0 END) AS attempt_count_true,
                     SUM(CASE WHEN is_correct THEN 0 ELSE 1 END) AS attempt_count_false
                 FROM
                     raw_data_ed
                 WHERE
-                    created_at >= '{context["ds"]}'::TIMESTAMP - INTERVAL '7 days' AND created_at < '{context["ds"]}'::TIMESTAMP
+                    created_at >= %s::TIMESTAMP - INTERVAL '7 days' AND created_at < %s::TIMESTAMP
                 GROUP BY
                     lti_user_id, attempt_type;
             """
-            cursor.execute(sql_query)
+            cursor.execute(sql_query, (context["ds"], context["ds"], context["ds"]))
         conn.commit()
 
 def load_data(**context):
@@ -117,11 +117,11 @@ def load_data(**context):
     from botocore.client import Config
     import codecs
 
-    sql_query1 = f"""
-    SELECT * FROM raw_data_ed WHERE created_at >= '{context["ds"]}'::TIMESTAMP - INTERVAL '7 days' AND created_at < '{context["ds"]}'::TIMESTAMP
+    sql_query1 = """
+    SELECT * FROM raw_data_ed WHERE created_at >= %s::TIMESTAMP - INTERVAL '7 days' AND created_at < %s::TIMESTAMP
 """
-    sql_query2 = f"""
-    SELECT * FROM agg_data_ed WHERE date_start = '{context["ds"]}'
+    sql_query2 = """
+    SELECT * FROM agg_data_ed WHERE date_start = %s
 """
     connection = BaseHook.get_connection('conn_pg')
 
@@ -137,9 +137,9 @@ def load_data(**context):
         tcp_user_timeout=600
     ) as conn:
         cursor = conn.cursor()
-        cursor.execute(sql_query1)
+        cursor.execute(sql_query1, (context["ds"], context["ds"]))
         data_raw = cursor.fetchall()
-        cursor.execute(sql_query2)
+        cursor.execute(sql_query2, (context["ds"],))
         data_agg = cursor.fetchall()
 
     file1 = BytesIO()
