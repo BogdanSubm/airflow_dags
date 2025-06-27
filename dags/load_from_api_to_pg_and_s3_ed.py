@@ -21,7 +21,7 @@ def raw_data(**context):
     import requests
     import psycopg2 as pg
 
-    end_api = datetime.strptime(context["ds"], "%Y-%m-%d") - timedelta(days=1)
+    end_api = datetime.strptime(context["ds"], "%Y-%m-%d") + timedelta(days=6)
     end_api = end_api.replace(hour=23, minute=59, second=59, microsecond=999999)
     end_api = end_api.strftime("%Y-%m-%d %H:%M:%S.%f")
     
@@ -29,7 +29,7 @@ def raw_data(**context):
     params = {
         "client": "Skillfactory",
         "client_key": "M2MGWS",
-        "start": (datetime.strptime(context["ds"], "%Y-%m-%d") - timedelta(7)).strftime("%Y-%m-%d %H:%M:%S"),
+        "start": (datetime.strptime(context["ds"], "%Y-%m-%d") + timedelta(0)).strftime("%Y-%m-%d %H:%M:%S"),
         "end": end_api,
     }
     response = requests.get(API_URL, params)
