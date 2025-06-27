@@ -13,7 +13,7 @@ DEFAULT_ARGS = {
     "owner": "ed",
     "retries": 2,
     "retry_delay": 600,
-    "start_date": datetime(2025, 6, 16),
+    "start_date": datetime(2025, 6, 23),
 }
 
 # Функция для загрузки данных по API в PG
@@ -46,9 +46,10 @@ def raw_data(**context):
         cursor = conn.cursor()
 
         for el in data:
-            start_date = datetime.strptime(context["ds"], "%Y-%m-%d")
-            end_date = start_date + timedelta(7)
-            created_at = datetime.strptime(el.get("created_at"), "%Y-%m-%d")
+            start_date = datetime.strptime(context["ds"], "%Y-%m-%d") - timedelta(7)
+            end_date = start_date
+            created_at = el.get("created_at")
+            created_at = datetime.strptime(created_at.split('.')[0], "%Y-%m-%d %H:%M:%S")
             if start_date <= created_at < end_date:
                 lti_user_id = el.get("lti_user_id")
                 created_at1 = el.get("created_at")
@@ -101,7 +102,7 @@ def agg_data(**context):
                 FROM
                     raw_data_ed
                 WHERE
-                    created_at >= '{context["ds"]}'::TIMESTAMP AND created_at < '{context["ds"]}'::TIMESTAMP + INTERVAL '7 days'
+                    created_at >= '{context["ds"]}'::TIMESTAMP - INTERVAL '7 days' AND created_at < '{context["ds"]}'::TIMESTAMP
                 GROUP BY
                     lti_user_id, attempt_type;
             """
@@ -117,7 +118,7 @@ def load_data(**context):
     import codecs
 
     sql_query1 = f"""
-    SELECT * FROM raw_data_ed WHERE created_at >= '{context["ds"]}'::TIMESTAMP AND created_at < '{context["ds"]}'::TIMESTAMP + INTERVAL '7 days'
+    SELECT * FROM raw_data_ed WHERE created_at >= '{context["ds"]}'::TIMESTAMP - INTERVAL '7 days' AND created_at < '{context["ds"]}'::TIMESTAMP
 """
     sql_query2 = f"""
     SELECT * FROM agg_data_ed WHERE date_start = '{context["ds"]}'
