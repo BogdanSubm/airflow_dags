@@ -25,8 +25,8 @@ def raw_data(**context):
     params = {
         "client": "Skillfactory",
         "client_key": "M2MGWS",
-        "start": datetime.strptime(context["ds"], "%Y-%m-%d") - timedelta(7),
-        "end": datetime.strptime(context["ds"], "%Y-%m-%d"),
+        "start": (datetime.strptime(context["ds"], "%Y-%m-%d") - timedelta(7)).strftime("%Y-%m-%d %H:%M:%S"),
+        "end": f'{context["ds"]} 00:00:00',
     }
     response = requests.get(API_URL, params)
     data = response.json()
@@ -47,7 +47,7 @@ def raw_data(**context):
 
         for el in data:
             start_date = datetime.strptime(context["ds"], "%Y-%m-%d") - timedelta(7)
-            end_date = start_date
+            end_date = datetime.strptime(f'{context["ds"]} 00:00:00', "%Y-%m-%d %H:%M:%S")
             created_at = el.get("created_at")
             created_at = datetime.strptime(created_at.split('.')[0], "%Y-%m-%d %H:%M:%S")
             if start_date <= created_at < end_date:
