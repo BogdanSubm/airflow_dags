@@ -25,8 +25,8 @@ def raw_data(**context):
     params = {
         "client": "Skillfactory",
         "client_key": "M2MGWS",
-        "start": context["ds"],
-        "end": (datetime.strptime(context["ds"], "%Y-%m-%d") + timedelta(7)).strftime("%Y-%m-%d")
+        "start": datetime.strptime(context["ds"], "%Y-%m-%d") - timedelta(7),
+        "end": datetime.strptime(context["ds"], "%Y-%m-%d"),
     }
     response = requests.get(API_URL, params)
     data = response.json()
@@ -159,7 +159,7 @@ def load_data(**context):
     file1.seek(0)
 
     writer2 = csv.writer(
-        writer_wrapper(file1),
+        writer_wrapper(file2),
         delimiter='\t',
         lineterminator='\n',
         quotechar='"',
