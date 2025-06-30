@@ -143,7 +143,7 @@ def upload_data(month_start: str, month_end: str, **context):
    
     s3_client.put_object(
         Body=file,
-        Bucket='default_storage',
+        Bucket='default-storage',
         Key=f"ed_{filename_year}-{filename_month}.csv"
     )
 
