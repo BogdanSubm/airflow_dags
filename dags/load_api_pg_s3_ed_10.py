@@ -40,6 +40,7 @@ class MonthTemplates:
 def raw_data(month_start: str, month_end: str, **context):
     import requests
     import psycopg2 as pg
+    import ast
 
     URL = 'https://b2b.itresume.ru/api/statistics'
     PARAMS = {
@@ -71,7 +72,7 @@ def raw_data(month_start: str, month_end: str, **context):
             cursor.execute("""SELECT 1 FROM raw_data_ed WHERE lti_user_id = %s AND created_at = %s""", (current_user, current_date))
             if not cursor.fetchone():
                 row = []
-                passback_params = eval(el.get("passback_params"))
+                passback_params = ast.literal_eval(el.get('passback_params') if el.get('passback_params') else '{}')
                 row.append(el.get('lti_user_id'))
                 row.append(True if el.get('is_correct') == 1 else False)
                 row.append(el.get('attempt_type'))
