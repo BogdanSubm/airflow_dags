@@ -71,7 +71,7 @@ def raw_data(month_start: str, month_end: str, **context):
             cursor.execute("""SELECT 1 FROM raw_data_ed WHERE lti_user_id = %s AND created_at = %s""", (current_user, current_date))
             if not cursor.fetchone():
                 row = []
-                passback_params = eval(el.get('passback_params', '{}'))
+                passback_params = eval(el.get("passback_params", "{}"))
                 row.append(el.get('lti_user_id'))
                 row.append(True if el.get('is_correct') == 1 else False)
                 row.append(el.get('attempt_type'))
@@ -166,7 +166,7 @@ with DAG(
     dag_end = EmptyOperator(task_id='dag_end')
 
     raw_data = PythonOperator(
-        task_id='combine_data',
+        task_id='raw_data',
         python_callable=raw_data,
         op_kwargs={
             'month_start': '{{ current_month_start(ds) }}',
