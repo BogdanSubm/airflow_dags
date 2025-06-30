@@ -12,7 +12,7 @@ DEFAULT_ARGS = {
     "owner": "ed",
     "retries": 2,
     "retry_delay": 600,
-    "start_date": datetime(2025, 6, 30),
+    "start_date": datetime(2025, 6, 29),
 }
 
 # Параметры Jinja
@@ -41,7 +41,7 @@ def raw_data(month_start: str, month_end: str, **context):
     import requests
     import psycopg2 as pg
 
-    URL = 'https://b2b.itresume.ru/api/statistics',
+    URL = 'https://b2b.itresume.ru/api/statistics'
     PARAMS = {
         'client': 'Skillfactory',
         'client_key': 'M2MGWS',
@@ -135,7 +135,7 @@ def upload_data(month_start: str, month_end: str, **context):
         aws_secret_access_key=connection.password,
         config=Config(signature_version="s3v4"),
     )
-    
+
     filename = datetime.strptime(month_start, "%Y-%m-%d")
     filename_year = filename.year
     filename_month = filename.month
