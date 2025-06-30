@@ -71,7 +71,7 @@ def raw_data(month_start: str, month_end: str, **context):
             cursor.execute("""SELECT 1 FROM raw_data_ed WHERE lti_user_id = %s AND created_at = %s""", (current_user, current_date))
             if not cursor.fetchone():
                 row = []
-                passback_params = eval(el.get("passback_params", "{}"))
+                passback_params = eval(el.get("passback_params"))
                 row.append(el.get('lti_user_id'))
                 row.append(True if el.get('is_correct') == 1 else False)
                 row.append(el.get('attempt_type'))
