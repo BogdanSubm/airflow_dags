@@ -14,7 +14,7 @@ DEFAULT_ARGS = {
     "owner": "ed",
     "retries": 2,
     "retry_delay": 600,
-    "start_date": datetime(2025, 6, 30),
+    "start_date": datetime(2025, 7, 1),
 }
 
 # Параметры Jinja
