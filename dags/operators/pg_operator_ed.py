@@ -40,9 +40,9 @@ class PostgresOperator(BaseOperator):
                         FROM
                             raw_data_ed
                         WHERE
-                            created_at >= %s::TIMESTAMP AND created_at < %s::TIMESTAMP + INTERVAL '7 days'
+                            TO_CHAR(created_at, 'YYYY-MM-DD') = %s
                         GROUP BY
                             lti_user_id, attempt_type;
                 """
-            cursor.execute(sql_query, self.date_from, self.date_from, self.date_from)
+            cursor.execute(sql_query, self.date_from, self.date_from)
             conn.commit()
