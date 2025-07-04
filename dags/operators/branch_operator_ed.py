@@ -13,7 +13,7 @@ class MyBrachOperator(BaseOperator, SkipMixin):
     def execute(self, context: Any):
         dt = pendulum.parse(context['ds'])
 
-        tasks_to_execute = []
+        tasks_to_execute = ['upload_data', 'dag_end']
 
         if dt.day in self.num_day:
             tasks_to_execute.append('agg_data')
