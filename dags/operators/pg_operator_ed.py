@@ -44,5 +44,5 @@ class PostgresOperator(BaseOperator):
                         GROUP BY
                             lti_user_id, attempt_type;
                 """
-            cursor.execute(sql_query, self.date_from)
+            cursor.execute(sql_query, self.date_from, self.date_from, self.date_from)
             conn.commit()
