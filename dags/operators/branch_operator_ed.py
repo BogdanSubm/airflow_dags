@@ -1,6 +1,5 @@
 from airflow.models import BaseOperator
 
-from typing import Any
 import pendulum
 
 class MyBranchOperator(BaseOperator):
@@ -9,10 +8,9 @@ class MyBranchOperator(BaseOperator):
         super().__init__(**kwargs)
         self.num_days = num_days
         
-    def execute(self, context: Any):
+    def execute(self, context):
         dt = pendulum.parse(context['ds'])
 
-        if dt.day not in self.num_days:
-            return 'upload_data'
-        else:
+        if dt.day in self.num_days:
             return 'agg_data'
+        return 'upload_data'
