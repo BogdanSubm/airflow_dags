@@ -21,6 +21,8 @@ class BranchOperator(BaseOperator, SkipMixin):
 
         if day_of_month in self.num_days:
             tasks_to_execute.append('agg_data')
+        
+        tasks_to_execute.append('dag_end')
 
         valid_task_ids = set(context['dag'].task_ids)
 
