@@ -167,7 +167,7 @@ with DAG(
 ) as dag:
     
     dag_start = EmptyOperator(task_id='dag_start')
-    dag_end = EmptyOperator(task_id='dag_end', trigger_rule=TriggerRule.ALL_DONE)
+    dag_end = EmptyOperator(task_id='dag_end', trigger_rule=TriggerRule.NONE_FAILED)
 
     raw_data = PythonOperator(
         task_id='raw_data',
@@ -195,7 +195,7 @@ with DAG(
             'month_start': '{{ current_month_start(ds) }}',
             'month_end': '{{ current_month_end(ds) }}'
         },
-        trigger_rule=TriggerRule.ALL_DONE,
+        trigger_rule=TriggerRule.NONE_FAILED,
     )
 
     dag_start >> raw_data >> branch >> [agg_data, upload_data]
