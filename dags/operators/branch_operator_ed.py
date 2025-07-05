@@ -5,16 +5,16 @@ from airflow.models import BaseOperator, SkipMixin
 
 class BranchOperator(BaseOperator, SkipMixin):
 
-    def __init__(self, dt, num_days, **kwargs):
+    template_fileds = ('dt',)
+
+    def __init__(self, dt: str, num_days: list, **kwargs):
         super().__init__(**kwargs)
         self.dt = dt
         self.num_days = num_days
     
     def execute(self, context):
-        if isinstance(self.dt, str):
-            dte = pendulum.parse(self.dt)
-        else:
-            dte = self.dt
+
+        dte = pendulum.parse(self.dt)
         day_of_month = dte.day
 
         tasks_to_execute = []
