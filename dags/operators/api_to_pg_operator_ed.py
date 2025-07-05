@@ -52,7 +52,7 @@ class APIToPgOperator(BaseOperator):
 
             rows_to_insert = []
             for el in data:
-                dt = datetime.strptime(el.get('created_at'), "%Y-%m-%d %H:%M:%S.%f")
+                dt = datetime.strptime(el.get('created_at'), '%Y-%m-%d %H:%M:%S.%f')
                 user = el.get('lti_user_id')
                 cursor.execute("""SELECT 1 FROM raw_data_ed WHERE lti_user_id = %s AND created_at = %s""", (user, dt))
                 if not cursor.fetchone():
