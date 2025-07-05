@@ -167,7 +167,7 @@ with DAG(
 ) as dag:
     
     dag_start = EmptyOperator(task_id='dag_start')
-    dag_end = EmptyOperator(task_id='dag_end', trigger_rule=TriggerRule.NONE_FAILED)
+    dag_end = EmptyOperator(task_id='dag_end')
 
     raw_data = PythonOperator(
         task_id='raw_data',
@@ -199,6 +199,7 @@ with DAG(
     )
 
     dag_start >> raw_data >> branch
-    branch >> agg_data >> upload_data
+    branch >> agg_data
     branch >> upload_data
+    agg_data >> upload_data
     upload_data >> dag_end
