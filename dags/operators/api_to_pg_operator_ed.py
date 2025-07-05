@@ -2,7 +2,6 @@ import requests
 import psycopg2 as pg
 import ast
 import pendulum
-from datetime import datetime
 
 from airflow.hooks.base import BaseHook
 from airflow.models.baseoperator import BaseOperator
@@ -52,7 +51,7 @@ class APIToPgOperator(BaseOperator):
 
             rows_to_insert = []
             for el in data:
-                dt = datetime.strptime(el.get('created_at'), "%Y-%m-%d %H:%M:%S.%f")
+                dt = pendulum.parse(el.get('created_at'))
                 user = el.get('lti_user_id')
                 cursor.execute("""SELECT 1 FROM raw_data_ed WHERE lti_user_id = %s AND created_at = %s""", (user, dt))
                 if not cursor.fetchone():

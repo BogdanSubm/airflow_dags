@@ -7,14 +7,14 @@ from operators.api_to_pg_operator_ed import APIToPgOperator
 from operators.branch_operator_ed import BranchOperator
 from operators.pg_operator_ed import PostgresOperator
 
-from datetime import datetime
+import pendulum
 
 # Аргументы по умолчанию
 DEFAULT_ARGS = {
     "owner": "ed",
     "retries": 2,
     "retry_delay": 600,
-    "start_date": datetime(2025, 7, 1),
+    "start_date": pendulum.date(2025, 7, 1)
 }
 
 def upload_data(dt: str, **context):
@@ -90,7 +90,7 @@ with DAG(
 ) as dag:
     
     dag_start = EmptyOperator(task_id='dag_start')
-    dag_end = EmptyOperator(task_id='dag_end')
+    dag_end = EmptyOperator(task_id='dag_end', trigger_rule='none_failed')
 
     raw_data = APIToPgOperator(
         task_id='raw_data',
@@ -115,7 +115,4 @@ with DAG(
         date_from='{{ ds }}'
     )
 
-    dag_start >> raw_data >> upload_data >> branch
-    branch >> agg_data
-    agg_data >> dag_end
-    branch >> dag_end
+    dag_start >> raw_data >> upload_data >> branch >> agg_data >> dag_end
