@@ -15,7 +15,7 @@ DEFAULT_ARGS = {
     "owner": "ed",
     "retries": 2,
     "retry_delay": 600,
-    "start_date": pendulum.date(2025, 7, 1)
+    "start_date": datetime(2025, 7, 1)
 }
 
 def upload_data(dt: str, **context):
