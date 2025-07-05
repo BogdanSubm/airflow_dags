@@ -11,7 +11,10 @@ class BranchOperator(BaseOperator, SkipMixin):
         self.num_days = num_days
     
     def execute(self, context):
-        dte = pendulum.parse(self.dt)
+        if isinstance(self.dt, str):
+            dte = pendulum.parse(self.dt)
+        else:
+            dte = self.dt
         day_of_month = dte.day
 
         tasks_to_execute = []
