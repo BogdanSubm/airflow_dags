@@ -4,7 +4,7 @@ from airflow.models.baseoperator import BaseOperator
 import psycopg2 as pg
 
 class PostgresOperator(BaseOperator):
-    template_fields = ('date_from')
+    template_fields = ('date_from',)
 
     def __init__(self, date_from: str, **kwargs):
         super().__init__(**kwargs)

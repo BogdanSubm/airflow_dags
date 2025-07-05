@@ -70,14 +70,12 @@ def upload_data(dt: str, **context):
         config=Config(signature_version="s3v4"),
     )
 
-    filename = pendulum.parse(dt)
-    year = filename.year
-    month = filename.month
+    year, month, _ = dt.split('-')
    
     s3_client.put_object(
         Body=file,
         Bucket='default-storage',
-        Key=f"ed_{year}-{month:02}.csv"
+        Key=f"ed_{year}-{int(month):02d}.csv"
     )
 
 # Параметры DAG

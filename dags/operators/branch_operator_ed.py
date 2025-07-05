@@ -5,7 +5,7 @@ from airflow.models import BaseOperator, SkipMixin
 
 class BranchOperator(BaseOperator, SkipMixin):
 
-    template_fileds = ('dt',)
+    template_fields = ('dt',)
 
     def __init__(self, dt: str, num_days: list, **kwargs):
         super().__init__(**kwargs)
