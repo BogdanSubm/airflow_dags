@@ -198,6 +198,7 @@ with DAG(
         trigger_rule=TriggerRule.NONE_FAILED,
     )
 
-    dag_start >> raw_data >> branch >> [agg_data, upload_data]
-    agg_data >> upload_data
+    dag_start >> raw_data >> branch
+    branch >> agg_data >> upload_data
+    branch >> upload_data
     upload_data >> dag_end
