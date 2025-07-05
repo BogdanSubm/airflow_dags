@@ -195,7 +195,7 @@ with DAG(
             'month_start': '{{ current_month_start(ds) }}',
             'month_end': '{{ current_month_end(ds) }}'
         },
-        trigger_rule=TriggerRule.NONE_FAILED,
+        trigger_rule=TriggerRule.ONE_SUCCESS,
     )
 
     dag_start >> raw_data >> branch
