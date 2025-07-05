@@ -7,14 +7,14 @@ from operators.api_to_pg_operator_ed import APIToPgOperator
 from operators.branch_operator_ed import BranchOperator
 from operators.pg_operator_ed import PostgresOperator
 
-import pendulum
+from datetime import datetime
 
 # Аргументы по умолчанию
 DEFAULT_ARGS = {
     "owner": "ed",
     "retries": 2,
     "retry_delay": 600,
-    "start_date": pendulum.date(2025, 7, 1),
+    "start_date": datetime(2025, 7, 1),
 }
 
 def upload_data(dt: str, **context):
