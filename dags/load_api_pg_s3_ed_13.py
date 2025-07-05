@@ -3,91 +3,21 @@ from airflow import DAG
 from airflow.operators.empty import EmptyOperator
 from airflow.operators.python import PythonOperator
 from airflow.hooks.base import BaseHook
-from operators.branch_operator_ed import MyBranchOperator
+from operators.api_to_pg_operator_ed import APIToPgOperator
+from operators.branch_operator_ed import BranchOperator
 from operators.pg_operator_ed import PostgresOperator
-from airflow.utils.trigger_rule import TriggerRule
 
-from datetime import datetime, timedelta
-from calendar import monthrange
+import pendulum
 
 # Аргументы по умолчанию
 DEFAULT_ARGS = {
     "owner": "ed",
     "retries": 2,
     "retry_delay": 600,
-    "start_date": datetime(2025, 7, 1),
+    "start_date": pendulum.date(2025, 7, 1),
 }
 
-# Параметры Jinja
-class MonthTemplates:
-    @staticmethod
-    def current_month_start(date) -> str:
-        logical_dt = datetime.strptime(date, "%Y-%m-%d")
-
-        current_month_start = logical_dt.replace(day=1)
-
-        return current_month_start.strftime("%Y-%m-%d")
-    
-    @staticmethod
-    def current_month_end(date) -> str:
-        logical_dt = datetime.strptime(date, "%Y-%m-%d")
-
-        current_year = logical_dt.year
-        current_month = logical_dt.month
-        day_week, last_day_month = monthrange(current_year, current_month)
-        current_month_end = datetime(current_year, current_month, last_day_month)
-
-        return current_month_end.strftime("%Y-%m-%d")
-
-# Функции для PythonOperator
-def raw_data(month_start: str, month_end: str, **context):
-    import requests
-    import psycopg2 as pg
-    import ast
-
-    URL = 'https://b2b.itresume.ru/api/statistics'
-    PARAMS = {
-        'client': 'Skillfactory',
-        'client_key': 'M2MGWS',
-        'start': month_start,
-        'end': month_end
-    }
-    response = requests.get(URL, params=PARAMS)
-    data = response.json()
-
-    connection = BaseHook.get_connection('conn_pg')
-    with pg.connect(
-        dbname='etl',
-        sslmode='disable',
-        user=connection.login,
-        password=connection.password,
-        host=connection.host,
-        port=connection.port,
-        connect_timeout=600,
-        keepalives_idle=600,
-        tcp_user_timeout=600
-    ) as conn:
-        cursor = conn.cursor()
-
-        for el in data:
-            current_date = datetime.strptime(el.get('created_at'), "%Y-%m-%d %H:%M:%S.%f")
-            current_user = el.get('lti_user_id')
-            cursor.execute("""SELECT 1 FROM raw_data_ed WHERE lti_user_id = %s AND created_at = %s""", (current_user, current_date))
-            if not cursor.fetchone():
-                row = []
-                passback_params = ast.literal_eval(el.get('passback_params') if el.get('passback_params') else '{}')
-                row.append(el.get('lti_user_id'))
-                row.append(True if el.get('is_correct') == 1 else False)
-                row.append(el.get('attempt_type'))
-                row.append(el.get('created_at'))
-                row.append(passback_params.get('oauth_consumer_key'))
-                row.append(passback_params.get('lis_result_sourcedid'))
-                row.append(passback_params.get('lis_outcome_service_url'))
-                cursor.execute("""INSERT INTO raw_data_ed VALUES (%s, %s, %s, %s, %s, %s, %s)""", row)
-        
-        conn.commit()
-
-def upload_data(month_start: str, month_end: str, **context):
+def upload_data(dt: str, **context):
     import psycopg2 as pg
     from io import BytesIO
     import csv
@@ -140,14 +70,14 @@ def upload_data(month_start: str, month_end: str, **context):
         config=Config(signature_version="s3v4"),
     )
 
-    filename = datetime.strptime(month_start, "%Y-%m-%d")
-    filename_year = filename.year
-    filename_month = filename.month
+    filename = pendulum.parse(dt)
+    year = filename.year
+    month = filename.month
    
     s3_client.put_object(
         Body=file,
         Bucket='default-storage',
-        Key=f"ed_{filename_year}-{filename_month}.csv"
+        Key=f"ed_{year}-{month:02}.csv"
     )
 
 # Параметры DAG
@@ -158,48 +88,36 @@ with DAG(
     default_args=DEFAULT_ARGS,
     catchup=True,
     max_active_runs=1,
-    max_active_tasks=1,
-    user_defined_macros={
-        'current_month_start': MonthTemplates.current_month_start,
-        'current_month_end': MonthTemplates.current_month_end,
-    },
-    render_template_as_native_obj=True
+    max_active_tasks=1
 ) as dag:
     
     dag_start = EmptyOperator(task_id='dag_start')
     dag_end = EmptyOperator(task_id='dag_end')
 
-    raw_data = PythonOperator(
+    raw_data = APIToPgOperator(
         task_id='raw_data',
-        python_callable=raw_data,
-        op_kwargs={
-            'month_start': '{{ current_month_start(ds) }}',
-            'month_end': '{{ current_month_end(ds) }}'
-        }
-    )
-
-    branch = MyBranchOperator(
-        task_id='branch',
-        num_days=[1, 2, 5],
-    )
-
-    agg_data = PostgresOperator(
-        task_id='agg_data',
         date_from='{{ ds }}',
+        date_to='{{ ds }}'
     )
 
     upload_data = PythonOperator(
         task_id='upload_data',
         python_callable=upload_data,
-        op_kwargs={
-            'month_start': '{{ current_month_start(ds) }}',
-            'month_end': '{{ current_month_end(ds) }}'
-        },
-        trigger_rule=TriggerRule.ONE_SUCCESS,
+        op_kwargs={'dt': '{{ ds }}'}
     )
 
-    dag_start >> raw_data >> branch
+    branch = BranchOperator(
+        task_id='branch',
+        dt='{{ ds }}',
+        num_days=[1, 2, 5]
+    )
+
+    agg_data = PostgresOperator(
+        task_id='agg_data',
+        date_from='{{ ds }}'
+    )
+
+    dag_start >> raw_data >> upload_data >> branch
     branch >> agg_data
-    branch >> upload_data
-    agg_data >> upload_data
-    upload_data >> dag_end
+    agg_data >> dag_end
+    branch >> dag_end

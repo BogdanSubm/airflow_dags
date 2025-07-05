@@ -1,22 +1,32 @@
-from airflow.models import BaseOperator
-from airflow.utils.context import Context
 import pendulum
 
-class MyBranchOperator(BaseOperator):
-    """Кастомный оператор ветвления с правильной логикой пропуска"""
-    
-    def __init__(self, num_days, **kwargs):
+from airflow.exceptions import AirflowException
+from airflow.models import BaseOperator, SkipMixin
+
+class BranchOperator(BaseOperator, SkipMixin):
+
+    def __init__(self, dt, num_days, **kwargs):
         super().__init__(**kwargs)
+        self.dt = dt
         self.num_days = num_days
+    
+    def execute(self, context):
+        dte = pendulum.parse(self.dt)
+        day_of_month = dte.day
+
+        tasks_to_execute = []
+
+        if day_of_month in self.num_days:
+            tasks_to_execute.append('agg_data')
+
+        valid_task_ids = set(context['dag'].task_ids)
+
+        invalid_task_ids = set(tasks_to_execute) - valid_task_ids
+
+        if invalid_task_ids:
+            raise AirflowException(
+                f"Branch callable must return valid task_ids. "
+                f"Invalid tasks found: {invalid_task_ids}"
+            )
         
-    def execute(self, context: Context):
-        execution_date = context['ds']
-        dt = pendulum.parse(execution_date)
-        self.log.info(f"Checking day {dt.day} against {self.num_days}")
-        
-        if dt.day in self.num_days:
-            self.log.info("Returning 'agg_data' as next task")
-            return 'agg_data'
-        else:
-            self.log.info(f"Day {dt.day} not in {self.num_days}, skipping 'agg_data'")
-            return 'upload_data'
+        self.skip_all_except(context['ti'], set(tasks_to_execute))
