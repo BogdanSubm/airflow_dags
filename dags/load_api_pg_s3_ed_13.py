@@ -5,6 +5,7 @@ from airflow.operators.python import PythonOperator
 from airflow.hooks.base import BaseHook
 from operators.branch_operator_ed import MyBrachOperator
 from operators.pg_operator_ed import PostgresOperator
+from airflow.utils.trigger_rule import TriggerRule
 
 from datetime import datetime, timedelta
 from calendar import monthrange
@@ -166,7 +167,7 @@ with DAG(
 ) as dag:
     
     dag_start = EmptyOperator(task_id='dag_start')
-    dag_end = EmptyOperator(task_id='dag_end')
+    dag_end = EmptyOperator(task_id='dag_end', trigger_rule=TriggerRule.ALL_DONE)
 
     raw_data = PythonOperator(
         task_id='raw_data',
@@ -179,6 +180,7 @@ with DAG(
 
     branch = MyBrachOperator(
         task_id='branch',
+        num_days=[1, 2, 5],
     )
 
     agg_data = PostgresOperator(
@@ -192,7 +194,10 @@ with DAG(
         op_kwargs={
             'month_start': '{{ current_month_start(ds) }}',
             'month_end': '{{ current_month_end(ds) }}'
-        }
+        },
+        trigger_rule=TriggerRule.ALL_DONE,
     )
 
-    dag_start >> raw_data >> branch >> agg_data >> upload_data >> dag_end
+    dag_start >> raw_data >> branch >> [agg_data, upload_data]
+    agg_data >> upload_data
+    upload_data >> dag_end
