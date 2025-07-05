@@ -1,4 +1,3 @@
-from airflow.exceptions import AirflowException
 from airflow.models import BaseOperator, SkipMixin
 from airflow.utils.state import State
 
@@ -7,14 +6,14 @@ import pendulum
 
 class MyBrachOperator(BaseOperator, SkipMixin):
     
-    def __init__(self, **kwargs):
+    def __init__(self, num_days, **kwargs):
         super().__init__(**kwargs)
+        self.num_days = num_days
         
     def execute(self, context: Any):
         dt = pendulum.parse(context['ds'])
 
-        if dt.day not in [1, 2, 5]:
-            self.skip(context['ti'], context['dag_run'], ['agg_data'])
-            context['ti'].set_state(State.SKIPPED)
+        if dt.day not in self.num_days:
+            return 'upload_data'
         else:
             return 'agg_data'
