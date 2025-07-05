@@ -179,7 +179,6 @@ with DAG(
 
     branch = MyBrachOperator(
         task_id='branch',
-        num_day=[1, 2, 5],
     )
 
     agg_data = PostgresOperator(

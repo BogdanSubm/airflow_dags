@@ -7,14 +7,13 @@ import pendulum
 
 class MyBrachOperator(BaseOperator, SkipMixin):
     
-    def __init__(self, num_day, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.num_day = num_day
-    
+        
     def execute(self, context: Any):
         dt = pendulum.parse(context['ds'])
 
-        if dt.day not in self.num_day:
+        if dt.day not in [1, 2, 5]:
             self.skip(context['ti'], context['dag_run'], ['agg_data'])
             context['ti'].set_state(State.SKIPPED)
         else:
