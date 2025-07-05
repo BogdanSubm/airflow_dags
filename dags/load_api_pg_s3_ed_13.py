@@ -3,7 +3,7 @@ from airflow import DAG
 from airflow.operators.empty import EmptyOperator
 from airflow.operators.python import PythonOperator
 from airflow.hooks.base import BaseHook
-from operators.branch_operator_ed import MyBrachOperator
+from operators.branch_operator_ed import MyBranchOperator
 from operators.pg_operator_ed import PostgresOperator
 from airflow.utils.trigger_rule import TriggerRule
 
@@ -178,7 +178,7 @@ with DAG(
         }
     )
 
-    branch = MyBrachOperator(
+    branch = MyBranchOperator(
         task_id='branch',
         num_days=[1, 2, 5],
     )
