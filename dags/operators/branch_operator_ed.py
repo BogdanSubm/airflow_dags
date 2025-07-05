@@ -14,7 +14,7 @@ class MyBrachOperator(BaseOperator, SkipMixin):
         dt = pendulum.parse(context['ds'])
 
         if dt.day not in self.num_days:
-            self.skip(context)
+            self.skip(context['dag'], context['task_instance'].execution_date, [context['task_instance']])
             return 'upload_data'
         else:
             return 'agg_data'
