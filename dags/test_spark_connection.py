@@ -19,8 +19,8 @@ with DAG(
             "JAVA_HOME": "/usr/lib/jvm/temurin-8-jdk-amd64",
             "SPARK_HOME": "/opt/spark",
             "PATH": "/opt/spark/bin:/usr/lib/jvm/temurin-8-jdk-amd64/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
-            "PYSPARK_PYTHON": "/usr/bin/python3",
-            "PYSPARK_DRIVER_PYTHON": "/usr/bin/python3",
+            "PYSPARK_PYTHON": "/usr/bin/python3.7",
+            "PYSPARK_DRIVER_PYTHON": "/usr/bin/python3.7",
         },
         conf={
             "spark.master": "spark://spark-master:7077",
