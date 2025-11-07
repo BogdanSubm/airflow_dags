@@ -12,7 +12,6 @@ with DAG(
     spark_pi = SparkSubmitOperator(
         task_id="spark_pi",
         conn_id="spark_default",
-        master="spark://spark-master:7077",
         application="/opt/airflow/dags/spark_test.py",
         name="spark-pi",
         verbose=True,
@@ -22,6 +21,7 @@ with DAG(
             "PATH": "/opt/spark/bin:/usr/lib/jvm/java-8-openjdk-amd64/bin:$PATH",
         },
         conf={
+            "spark.master": "spark://spark-master:7077",
             "spark.executor.memory": "512m",
             "spark.driver.memory": "512m",
         },
