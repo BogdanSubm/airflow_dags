@@ -15,14 +15,16 @@ with DAG(
         application="/opt/airflow/dags/spark_test.py",
         name="spark-pi",
         verbose=True,
+        env_vars={
+            "JAVA_HOME": "/usr/lib/jvm/java-1.8-openjdk",
+            "SPARK_HOME": "/opt/spark",
+            "PATH": "/opt/spark/bin:/usr/lib/jvm/java-1.8-openjdk/bin:$PATH",
+            "PYSPARK_PYTHON": "/usr/bin/python3",
+            "PYSPARK_DRIVER_PYTHON": "/usr/bin/python3",
+        },
         conf={
             "spark.master": "spark://spark-master:7077",
             "spark.executor.memory": "512m",
             "spark.driver.memory": "512m",
-        },
-        env_vars={
-            "JAVA_HOME": "/usr/lib/jvm/temurin-8-jdk-amd64",
-            "SPARK_HOME": "/opt/spark",
-            "PATH": "/opt/spark/bin:/usr/lib/jvm/temurin-8-jdk-amd64/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
         },
     )
