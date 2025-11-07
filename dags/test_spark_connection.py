@@ -15,8 +15,8 @@ with DAG(
         application="/opt/airflow/dags/spark_test.py",
         name="spark-pi",
         verbose=True,
-        master="spark://spark-master:7077",
         conf={
+            "spark.master": "spark://spark-master:7077",
             "spark.executor.memory": "512m",
             "spark.driver.memory": "512m",
         },
