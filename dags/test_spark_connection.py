@@ -23,7 +23,7 @@ with DAG(
             "PYSPARK_DRIVER_PYTHON": "/usr/bin/python3",
         },
         conf={
-            "spark.master": "spark://spark-master:7077",
+            "spark.master": "spark://spark-master:17077",
             "spark.executor.memory": "512m",
             "spark.driver.memory": "512m",
         },
