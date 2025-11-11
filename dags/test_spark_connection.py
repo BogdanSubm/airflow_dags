@@ -11,7 +11,6 @@ with DAG(
 ) as dag:
     spark_pi = SparkSubmitOperator(
         task_id="spark_pi",
-        conn_id="spark_default",
         application="/opt/airflow/dags/spark_test.py",
         name="spark-pi",
         verbose=True,
