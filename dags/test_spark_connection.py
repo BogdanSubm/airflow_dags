@@ -7,25 +7,20 @@ with DAG(
     start_date=datetime(2025, 1, 1),
     schedule=None,
     catchup=False,
-    tags=["spark"],
 ) as dag:
+
     spark_pi = SparkSubmitOperator(
         task_id="spark_pi",
         application="/opt/airflow/dags/spark_test.py",
-        name="spark-pi",
+        name="spark-test",
         verbose=True,
-        env_vars={
-            "JAVA_HOME": "/usr/lib/jvm/temurin-11-jdk-amd64",
-            "SPARK_HOME": "/opt/spark",
-            "PATH": "/opt/spark/bin:/usr/lib/jvm/temurin-11-jdk-amd64/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
-            "PYSPARK_PYTHON": "/usr/bin/python3",
-            "PYSPARK_DRIVER_PYTHON": "/usr/bin/python3",
-        },
+
+        # ✨ Главное изменение
+        deploy_mode="cluster",
+
         conf={
             "spark.master": "spark://172.20.20.15:7077",
-            "spark.driver.host": "172.20.20.15",
-            "spark.driver.bindAddress": "0.0.0.0",
             "spark.executor.memory": "512m",
             "spark.driver.memory": "512m",
-        },
+        }
     )
