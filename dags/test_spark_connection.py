@@ -23,6 +23,8 @@ with DAG(
         },
         conf={
             "spark.master": "spark://172.20.20.15:7077",
+            "spark.driver.host": "172.20.20.15",
+            "spark.driver.bindAddress": "0.0.0.0",
             "spark.executor.memory": "512m",
             "spark.driver.memory": "512m",
         },
