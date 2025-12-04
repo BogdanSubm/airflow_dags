@@ -1,11 +1,11 @@
 from pyspark.sql import SparkSession
 
-spark = SparkSession.builder.appName("spark-pi").getOrCreate()
+spark = SparkSession.builder.appName("spark-test").getOrCreate()
 
-data = spark.range(0, 1000000)
+# Простейшее вычисление
+nums = spark.range(10)
+total = nums.count()
 
-pi = data.rdd.map(lambda row: 4.0 / (1 + (row.id % 1000) ** 2)).mean()
-
-print(f"Approx PI = {pi}")
+print("Total =", total)
 
 spark.stop()
