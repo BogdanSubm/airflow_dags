@@ -15,9 +15,6 @@ with DAG(
         name="spark-test",
         verbose=True,
 
-        # ✨ Главное изменение
-        deploy_mode="cluster",
-
         conf={
             "spark.master": "spark://172.20.20.15:7077",
             "spark.executor.memory": "512m",
