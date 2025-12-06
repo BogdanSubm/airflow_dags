@@ -6,7 +6,7 @@ from airflow.operators.python import PythonOperator
 from airflow.hooks.base import BaseHook
 
 DEFAULT_ARGS = {
-    'owner': 'admin',
+    'owner': 'mikhail_k',
     'retries': 2,
     'retry_delay': 600,
     'start_date': datetime(2024, 11, 12),
