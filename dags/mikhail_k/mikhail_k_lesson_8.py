@@ -66,7 +66,7 @@ def load_from_api(**context):
 
 with DAG(
     dag_id="mikhail_k_lesson_8",    # Имя дага
-    tags=['4', 'mikhail_k'],            # Теги для поиска
+    tags=['mikhail_k'],             # Теги для поиска
     schedule='@daily',              # Расписание запуска: ежедневно
     default_args=DEFAULT_ARGS,      # Аргументы из переменной выше
     max_active_runs=1,              # Сколько одновременно дагранов будет работать
