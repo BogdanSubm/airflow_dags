@@ -14,24 +14,22 @@ DEFAULT_ARGS = {
 
 API_URL = "https://b2b.itresume.ru/api/statistics"
 
-
 def load_from_api(**context):
     import requests
     import pendulum
-    import psycopg2 as pg
-    import ast
 
     payload = {
         'client': 'Skillfactory',
         'client_key': 'M2MGWS',
-        'start': context['ds'], # Строка в формате 2024-01-01
-        # Лучше использовать логическую дату запуска дага 
-        # Если @daily, то будет предыдущий день
-        # Если @weekly, то предыдущая неделя и т.д
-        'end': pendulum.parse(context['ds']).add(days=1).to_date_string(),
+        'start': context['ds'],
+        'end': pendulum.parse(context['ds']).add(days=7).to_date_string(),
     }
     response = requests.get(API_URL, params=payload)
-    data = response.json()
+    return response.json()
+
+def write_data_to_db(data):
+    import psycopg2 as pg
+    import ast
 
     connection = BaseHook.get_connection('conn_pg')
 
@@ -63,14 +61,13 @@ def load_from_api(**context):
 
         conn.commit()
 
-
 with DAG(
-    dag_id="mikhail_k_lesson_8",    # Имя дага
-    tags=['4', 'mikhail_k'],            # Теги для поиска
-    schedule='@daily',              # Расписание запуска: ежедневно
-    default_args=DEFAULT_ARGS,      # Аргументы из переменной выше
-    max_active_runs=1,              # Сколько одновременно дагранов будет работать
-    max_active_tasks=1              # В одном дагране может работать только одна таска
+    dag_id="mikhail_k_lesson_8_practice",   # Имя дага
+    tags=['mikhail_k'],                     # Теги для поиска
+    schedule='@weekly',                     # Расписание запуска: ежедневно
+    default_args=DEFAULT_ARGS,              # Аргументы из переменной выше
+    max_active_runs=1,                      # Сколько одновременно дагранов будет работать
+    max_active_tasks=1                      # В одном дагране может работать только одна таска
 ) as dag:
 
     dag_start = EmptyOperator(task_id='dag_start')
@@ -81,4 +78,9 @@ with DAG(
         python_callable=load_from_api,
     )
 
-    dag_start >> load_from_api >> dag_end
+    write_data_to_db = PythonOperator(
+        task_id='write_data_to_db',
+        python_callable=write_data_to_db,
+    )    
+
+    dag_start >> load_from_api >> write_data_to_db >> dag_end
