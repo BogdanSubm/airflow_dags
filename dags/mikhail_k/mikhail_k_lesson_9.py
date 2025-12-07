@@ -74,7 +74,7 @@ def upload_data(**context):
     s3_client.put_object(
         Body=file,
         Bucket='default-storage',
-        key=f"mikhail_k_{context['ds']}.csv"
+        Key=f"mikhail_k_{context['ds']}.csv"
     )
 
 
