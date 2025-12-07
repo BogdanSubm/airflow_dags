@@ -43,7 +43,7 @@ def upload_data(**context):
         tcp_user_timeout=600
     ) as conn:
         cursor = conn.cursor()
-        cursor.execute(sql_querry)
+        cursor.execute(sql_query)
         data = cursor.fetchall()
 
     file = BytesIO()
@@ -82,7 +82,7 @@ def upload_data(**context):
 def combine_data(**context):
     import psycopg2 as pg
 
-    sql_querry = f"""
+    sql_query = f"""
         INSERT INTO mikhail_k_agg_table
         SELECT lti_user_id,
             attempt_type,
@@ -109,7 +109,7 @@ def combine_data(**context):
         tcp_user_timeout=600
     ) as conn:
         cursor = conn.cursor()
-        cursor.execute(sql_querry)
+        cursor.execute(sql_query)
         conn.commit()
 
 with DAG(
