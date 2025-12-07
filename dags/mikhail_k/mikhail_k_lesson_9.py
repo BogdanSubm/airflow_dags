@@ -26,7 +26,7 @@ def upload_data(**context):
     sql_query = f"""
         SELECT * FROM mikhail_k_agg_table
         WHERE date >= '{context['ds']}'::timestamp
-        AND date < '{context['ds']}::timestamp + INTERVAL '7 days';
+        AND date < '{context['ds']}'::timestamp + INTERVAL '7 days';
     """
 
     connection = BaseHook.get_connection('conn_pg')
@@ -88,10 +88,10 @@ def combine_data(**context):
             attempt_type,
             COUNT(1) AS cnt_attempt,
             COUNT(attempt_type) FILTER (WHERE is_correct) AS cnt_correct,
-            '{context['ds']}'::timestamp AS date
+            "{context['ds']}'::timestamp AS date
         FROM mikhail_k_table 
         WHERE created_at >= '{context['ds']}'::timestamp
-        AND created_at < '{context['ds']}::timestamp + INTERVAL '7 days'
+        AND created_at < '{context['ds']}'::timestamp + INTERVAL '7 days'
         GROUP BY lti_user_id, attempt_type;
     """
 
