@@ -167,8 +167,8 @@ def upload_raw_data(**context):
 
     sql_query = f"""
         SELECT * FROM mikhail_k_table
-        WHERE date >= '{context['ds']}'::timestamp
-        AND date < '{context['ds']}'::timestamp + INTERVAL '7 days';
+        WHERE created_at >= '{context['ds']}'::timestamp
+        AND created_at < '{context['ds']}'::timestamp + INTERVAL '7 days';
     """
 
     connection = BaseHook.get_connection('conn_pg')
