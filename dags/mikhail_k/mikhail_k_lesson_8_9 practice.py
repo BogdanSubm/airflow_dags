@@ -153,7 +153,7 @@ def upload_agg_data(**context):
 
     s3_client.put_object(
         Body=file,
-        Bucket='default-storage',
+        Bucket='mikhail_k',
         Key=f"mikhail_k_agg_{context['ds']}.csv"
     )
 
@@ -215,7 +215,7 @@ def upload_raw_data(**context):
 
     s3_client.put_object(
         Body=file,
-        Bucket='default-storage',
+        Bucket='mikhail_k',
         Key=f"mikhail_k_raw_{context['ds']}.csv"
     )
 
