@@ -58,36 +58,36 @@ def upload_data(week_start: str, week_end: str, **context):
         cursor.execute(sql_query)
         data = cursor.fetchall()
 
-    file = BytesIO()
+        file = BytesIO()
 
-    writer_wrapper = codecs.getwriter('utf-8')
+        writer_wrapper = codecs.getwriter('utf-8')
 
-    writer = csv.writer(
-        writer_wrapper(file),
-        delimiter=',',
-        lineterminator='\n',
-        quotechar='"',
-        quoting=csv.QUOTE_MINIMAL
-    )
+        writer = csv.writer(
+            writer_wrapper(file),
+            delimiter=',',
+            lineterminator='\n',
+            quotechar='"',
+            quoting=csv.QUOTE_MINIMAL
+        )
 
-    writer.writerows(data)
-    file.seek(0)
+        writer.writerows(data)
+        file.seek(0)
 
-    connection = BaseHook.get_connection('conn_s3')
+        connection = BaseHook.get_connection('conn_s3')
 
-    s3_client = s3.client(
-        's3',
-        endpoint_url=connection.host,
-        aws_access_key_id=connection.login,
-        aws_secret_access_key=connection.password,
-        config=Config(signature_version="s3v4"),
-    )
+        s3_client = s3.client(
+            's3',
+            endpoint_url=connection.host,
+            aws_access_key_id=connection.login,
+            aws_secret_access_key=connection.password,
+            config=Config(signature_version="s3v4"),
+        )
 
-    s3_client.put_object(
-        Body=file,
-        Bucket='mikhail-k',
-        Key=f"mikhail_k_{week_start}_{context['ds']}.csv"
-    )
+        s3_client.put_object(
+            Body=file,
+            Bucket='mikhail-k',
+            Key=f"mikhail_k_{week_start}_{context['ds']}.csv"
+        )
 
 
 def combine_data(week_start: str, week_end: str, **context):
