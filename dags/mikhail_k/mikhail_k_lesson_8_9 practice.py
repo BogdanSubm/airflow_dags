@@ -132,7 +132,7 @@ def upload_agg_data(**context):
 
     writer = csv.writer(
         writer_wrapper(file),
-        delimiter='\t',
+        delimiter=',',
         lineterminator='\n',
         quotechar='"',
         quoting=csv.QUOTE_MINIMAL
@@ -194,7 +194,7 @@ def upload_raw_data(**context):
 
     writer = csv.writer(
         writer_wrapper(file),
-        delimiter='\t',
+        delimiter=',',
         lineterminator='\n',
         quotechar='"',
         quoting=csv.QUOTE_MINIMAL
