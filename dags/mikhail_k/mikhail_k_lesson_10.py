@@ -97,8 +97,8 @@ def combine_data(week_start: str, week_end: str, **context):
         INSERT INTO mikhail_k_agg_table_weekly
         SELECT lti_user_id,
                attempt_type,
-               COUNT(1),
-               COUNT(CASE WHEN is_correct THEN NULL ELSE 1 END) AS attempt_failed_count,
+               COUNT(1) AS cnt_attempt,
+               COUNT(CASE WHEN is_correct THEN 1 ELSE NULL END) AS cnt_correct,
                '{week_start}'::timestamp
           FROM mikhail_k_table
          WHERE created_at >= '{week_start}'::timestamp 
