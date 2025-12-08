@@ -17,19 +17,20 @@ API_URL = "https://b2b.itresume.ru/api/statistics"
 def load_from_api(**context):
     import requests
     import pendulum
+    import psycopg2 as pg
+    import ast
 
     payload = {
         'client': 'Skillfactory',
         'client_key': 'M2MGWS',
-        'start': context['ds'],
-        'end': pendulum.parse(context['ds']).add(days=7).to_date_string(),
+        'start': context['ds'], # Строка в формате 2024-01-01
+        # Лучше использовать логическую дату запуска дага 
+        # Если @daily, то будет предыдущий день
+        # Если @weekly, то предыдущая неделя и т.д
+        'end': pendulum.parse(context['ds']).add(days=1).to_date_string(),
     }
     response = requests.get(API_URL, params=payload)
-    return response.json()
-
-def write_data_to_db(data):
-    import psycopg2 as pg
-    import ast
+    data = response.json()
 
     connection = BaseHook.get_connection('conn_pg')
 
@@ -61,8 +62,165 @@ def write_data_to_db(data):
 
         conn.commit()
 
+def combine_data(**context):
+    import psycopg2 as pg
+
+    sql_query = f"""
+        INSERT INTO mikhail_k_agg_table
+        SELECT lti_user_id,
+            attempt_type,
+            COUNT(1) AS cnt_attempt,
+            COUNT(attempt_type) FILTER (WHERE is_correct) AS cnt_correct,
+            '{context['ds']}'::timestamp AS date
+        FROM mikhail_k_table 
+        WHERE created_at >= '{context['ds']}'::timestamp
+        AND created_at < '{context['ds']}'::timestamp + INTERVAL '7 days'
+        GROUP BY lti_user_id, attempt_type;
+    """
+
+    connection = BaseHook.get_connection('conn_pg')
+
+    with pg.connect(
+        dbname='etl',
+        sslmode='disable',
+        user=connection.login,
+        password=connection.password,
+        host=connection.host,
+        port=connection.port,
+        connect_timeout=600,
+        keepalives_idle=600,
+        tcp_user_timeout=600
+    ) as conn:
+        cursor = conn.cursor()
+        cursor.execute(sql_query)
+        conn.commit()
+
+def upload_agg_data(**context):
+    import psycopg2 as pg
+    from io import BytesIO
+    import csv
+    import boto3 as s3
+    from botocore.client import Config
+    import codecs
+
+    sql_query = f"""
+        SELECT * FROM mikhail_k_agg_table
+        WHERE date >= '{context['ds']}'::timestamp
+        AND date < '{context['ds']}'::timestamp + INTERVAL '7 days';
+    """
+
+    connection = BaseHook.get_connection('conn_pg')
+
+    with pg.connect(
+        dbname='etl',
+        sslmode='disable',
+        user=connection.login,
+        password=connection.password,
+        host=connection.host,
+        port=connection.port,
+        connect_timeout=600,
+        keepalives_idle=600,
+        tcp_user_timeout=600
+    ) as conn:
+        cursor = conn.cursor()
+        cursor.execute(sql_query)
+        data = cursor.fetchall()
+
+    file = BytesIO()
+
+    writer_wrapper = codecs.getwriter('utf-8')
+
+    writer = csv.writer(
+        writer_wrapper(file),
+        delimiter='\t',
+        lineterminator='\n',
+        quotechar='"',
+        quoting=csv.QUOTE_MINIMAL
+    )
+
+    writer.writerows(data)
+    file.seek(0)
+
+    connection = BaseHook.get_connection('conn_s3')
+
+    s3_client = s3.client(
+        's3',
+        endpoint_url=connection.host,
+        aws_access_key_id=connection.login,
+        aws_secret_access_key=connection.password,
+        config=Config(signature_version="s3v4"),
+    )
+
+    s3_client.put_object(
+        Body=file,
+        Bucket='default-storage',
+        Key=f"mikhail_k_agg_{context['ds']}.csv"
+    )
+
+def upload_raw_data(**context):
+    import psycopg2 as pg
+    from io import BytesIO
+    import csv
+    import boto3 as s3
+    from botocore.client import Config
+    import codecs
+
+    sql_query = f"""
+        SELECT * FROM mikhail_k_table
+        WHERE date >= '{context['ds']}'::timestamp
+        AND date < '{context['ds']}'::timestamp + INTERVAL '7 days';
+    """
+
+    connection = BaseHook.get_connection('conn_pg')
+
+    with pg.connect(
+        dbname='etl',
+        sslmode='disable',
+        user=connection.login,
+        password=connection.password,
+        host=connection.host,
+        port=connection.port,
+        connect_timeout=600,
+        keepalives_idle=600,
+        tcp_user_timeout=600
+    ) as conn:
+        cursor = conn.cursor()
+        cursor.execute(sql_query)
+        data = cursor.fetchall()
+
+    file = BytesIO()
+
+    writer_wrapper = codecs.getwriter('utf-8')
+
+    writer = csv.writer(
+        writer_wrapper(file),
+        delimiter='\t',
+        lineterminator='\n',
+        quotechar='"',
+        quoting=csv.QUOTE_MINIMAL
+    )
+
+    writer.writerows(data)
+    file.seek(0)
+
+    connection = BaseHook.get_connection('conn_s3')
+
+    s3_client = s3.client(
+        's3',
+        endpoint_url=connection.host,
+        aws_access_key_id=connection.login,
+        aws_secret_access_key=connection.password,
+        config=Config(signature_version="s3v4"),
+    )
+
+    s3_client.put_object(
+        Body=file,
+        Bucket='default-storage',
+        Key=f"mikhail_k_raw_{context['ds']}.csv"
+    )
+
 with DAG(
-    dag_id="mikhail_k_lesson_8_practice",   # Имя дага
+    dag_id="mikhail_k_lesson_8_9_practice", # Имя дага
     tags=['mikhail_k'],                     # Теги для поиска
     schedule='@weekly',                     # Расписание запуска: ежедневно
     default_args=DEFAULT_ARGS,              # Аргументы из переменной выше
@@ -78,9 +236,21 @@ with DAG(
         python_callable=load_from_api,
     )
 
-    write_data_to_db = PythonOperator(
-        task_id='write_data_to_db',
-        python_callable=write_data_to_db,
+    combine_data = PythonOperator(
+        task_id='combine_data',
+        python_callable=combine_data,
+    )
+
+    upload_agg_data = PythonOperator(
+        task_id='upload_agg_data',
+        python_callable=upload_agg_data,
     )    
 
-    dag_start >> load_from_api >> write_data_to_db >> dag_end
+    upload_raw_data = PythonOperator(
+        task_id='upload_raw_data',
+        python_callable=upload_raw_data,
+    )     
+
+    dag_start >> load_from_api >> upload_raw_data >> dag_end
+
+    dag_start >> load_from_api >> combine_data >> upload_agg_data >> dag_end
