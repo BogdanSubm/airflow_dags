@@ -117,7 +117,7 @@ def combine_data(**context):
         conn.commit()
 
 with DAG(
-    dag_id="mikhail_k_lesson_14",
+    dag_id="mikhail_k_lesson_15",
     tags=['mikhail_k'],
     schedule='@weekly',
     default_args=DEFAULT_ARGS,
