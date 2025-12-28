@@ -1,7 +1,6 @@
 import psycopg2 as pg
 from airflow.hooks.base import BaseHook
 from airflow.sensors.base import BaseSensorOperator
-from airflow.utils.decorators import apply_defaults
 
 class SqlSensor(BaseSensorOperator):
     template_fields = ('sql', ) # данный параметр прописывается, чтобы можно было использовать переменные в sql запросе, как template jinja
@@ -10,7 +9,7 @@ class SqlSensor(BaseSensorOperator):
         super().__init__(**kwargs)
         self.sql = sql
 
-    def poke(self, context) -> bool: # данный метод проверяет, выполнился ли запрос. Он идет вместо execute
+    def poke(self, context) -> bool: # данный метод проверяет, выполнился ли запрос. Он идет вместо execute, который не обязательно что-то возвращает.
         connection = BaseHook.get_connection('conn_pg')
 
         with pg.connect(
@@ -25,9 +24,7 @@ class SqlSensor(BaseSensorOperator):
             tcp_user_timeout=600
         ) as conn:
             cursor = conn.cursor() # Создаем курсор 
-
             self.log.info(self.sql) # Логирование sql запроса
-
             cursor.execute(self.sql) # Выполняем запрос
             result = cursor.fetchone() # Получаем данные. fetchone - получает одну строку
 
