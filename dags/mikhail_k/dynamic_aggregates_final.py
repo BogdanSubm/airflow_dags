@@ -73,7 +73,7 @@ with DAG(
         sql = Template(agg["table_dml"]).render(
             table_name=agg["table_name"],
         )
-        PostgresHook("conn_pg").run(sql)
+        PostgresHook("conn_pg").run(sql, parameters={"ds": "{{ ds }}"})
 
     @task
     def export_if_needed(agg: dict):
