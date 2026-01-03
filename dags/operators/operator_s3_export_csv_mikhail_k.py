@@ -22,30 +22,38 @@ class S3ExportCSVOperator(BaseOperator):
         # Парсим путь
         bucket, key = self.s3_path.replace("s3://", "").split("/", 1)
 
-        # Подключение к БД
-        pg_hook = PostgresHook(self.postgres_conn_id)
-        where = " WHERE ds = '{{ ds }}'::DATE" if "ds" in self.table_name.lower() else ""
-        sql = f"COPY (SELECT * FROM {self.table_name}{where}) TO STDOUT WITH (FORMAT CSV, HEADER TRUE)"
+        #ВАЖНО: берём ds из контекста!
+        ds = context["ds"]
+
+        # Фильтрация по ds — только если колонка называется ds
+        where_clause = f" WHERE ds = '{ds}'::DATE" if "ds" in self.table_name.lower() else ""
+        sql = f"COPY (SELECT * FROM {self.table_name}{where_clause}) TO STDOUT WITH (FORMAT CSV, HEADER TRUE)"
+
+        self.log.info(f"Выполняем COPY: {sql}")
 
         # Читаем данные
         buffer = io.StringIO()
-        cur = pg_hook.get_conn().cursor()
+        cur = PostgresHook(self.postgres_conn_id).get_conn().cursor()
         cur.copy_expert(sql, buffer)
         csv_data = buffer.getvalue().encode("utf-8")
 
-        # === РУЧНОЙ boto3 клиент (работает с FTP-подключением!) ===
+        if not csv_data.strip():
+            self.log.warning(f"Данные пустые для {self.table_name} за {ds} — ничего не экспортируем")
+            return
+
+        # РУЧНОЙ boto3 клиент
         conn = BaseHook.get_connection(self.s3_conn_id)
         extra = conn.extra_dejson if conn.extra_dejson else {}
-        endpoint_url = extra.get("endpoint_url") or conn.host
+        endpoint_url = extra.get("endpoint_url") or conn.host or ""
 
         session = boto3.session.Session()
         s3_client = session.client(
             's3',
             aws_access_key_id=conn.login,
             aws_secret_access_key=conn.password,
-            endpoint_url=endpoint_url.rstrip("/")
+            endpoint_url=endpoint_url.rstrip("/") if endpoint_url else None
         )
 
-        self.log.info(f"Экспорт {self.table_name} → s3://{bucket}/{key}")
+        self.log.info(f"Экспорт {self.table_name} ({len(csv_data)} байт) → s3://{bucket}/{key}")
         s3_client.put_object(Bucket=bucket, Key=key, Body=csv_data)
-        self.log.info("Экспорт завершён")
+        self.log.info("Экспорт завершён успешно")
