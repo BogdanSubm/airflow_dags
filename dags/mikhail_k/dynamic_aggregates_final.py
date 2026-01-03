@@ -73,7 +73,7 @@ with DAG(
         ds = context["ds"]  # БЕРЁМ ИЗ КОНТЕКСТА
         sql = Template(agg["table_dml"]).render(
             table_name=agg["table_name"],
-            ds=ds  # ← передаём как переменную
+            ds=ds  # передаём как переменную
         )
         PostgresHook("conn_pg").run(sql)
 
