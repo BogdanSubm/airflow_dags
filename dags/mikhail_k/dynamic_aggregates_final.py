@@ -99,8 +99,4 @@ with DAG(
     export_tasks = export_if_needed.expand(agg=load_config.output)
 
     # === ЗАВИСИМОСТИ ===
-    ensure_tasks >> wait_tasks >> load_tasks >> export_tasks 
-
-    # === КРАСИВАЯ РАМКА ===
-    dag_start >> load_config >> ensure_tasks 
-    (load_tasks + export_tasks) >> dag_end
+    dag_start >> load_config >> ensure_tasks >> [load_tasks, export_tasks] >> dag_end
