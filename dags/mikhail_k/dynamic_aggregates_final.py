@@ -71,9 +71,9 @@ with DAG(
     @task
     def load_data(agg: dict):
         sql = Template(agg["table_dml"]).render(
-            table_name=agg["table_name"],
+            table_name=agg["table_name"]
         )
-        PostgresHook("conn_pg").run(sql, parameters={"ds": "{{ ds }}"})
+        PostgresHook("conn_pg").run(sql)
 
     @task
     def export_if_needed(agg: dict):
