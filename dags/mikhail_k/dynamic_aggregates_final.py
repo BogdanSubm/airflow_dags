@@ -1,7 +1,7 @@
 # dags/dynamic_aggregates_final.py
 from datetime import datetime, timedelta
 from airflow import DAG
-from airflow.decorators import task, task_group 
+from airflow.decorators import task
 from airflow.operators.empty import EmptyOperator
 from operators.operator_s3_load_config_mikhail_k import S3LoadConfigOperator
 from operators.operator_postgres_ensure_table_mikhail_k import PostgresEnsureTableOperator
@@ -88,4 +88,4 @@ with DAG(
         else:
             dag_start >> ensure >> wait >> load >> dag_end
 
-    create_tasks_for_aggregate.expand(agg=load_config.output)
+    process_one_aggregate.expand(agg=load_config.output)
