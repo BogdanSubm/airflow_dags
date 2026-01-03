@@ -10,6 +10,12 @@ from operators.operator_s3_export_csv_mikhail_k import S3ExportCSVOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from jinja2 import Template
 
+DEFAULT_ARGS = {
+        "owner": "mikhail_k",
+        "retries": 1,
+        "retry_delay": timedelta(minutes=5),
+    }
+
 def check_partition_empty(table_name: str, **context):
     ds = context["ds"]
     hook = PostgresHook("conn_pg")
@@ -22,15 +28,11 @@ def check_partition_empty(table_name: str, **context):
 with DAG(
     dag_id="dynamic_aggregates_final",
     description="Финальная версия - полная динамика + сенсоры + защита от дублей",
-    schedule_interval="0 5 * * *",
+    schedule='@daily',
     start_date=datetime(2024, 1, 1),
     catchup=False,
     max_active_runs=1,
-    default_args={
-        "owner": "mikhail_k",
-        "retries": 1,
-        "retry_delay": timedelta(minutes=5),
-    },
+    default_args=DEFAULT_ARGS,
     tags=["aggregates", "dynamic", "mikhail_k"],
     render_template_as_native_obj=True,
 ) as dag:
