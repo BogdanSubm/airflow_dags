@@ -10,13 +10,12 @@ from operators.operator_s3_export_csv_mikhail_k import S3ExportCSVOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from jinja2 import Template
 
-def check_partition_empty(table_name: str, **context):
+def is_partition_empty(table_name: str, **context):
     ds = context["ds"]
     hook = PostgresHook("conn_pg")
-    sql = f"SELECT 1 FROM {table_name} WHERE ds = '{ds}'::DATE LIMIT 1"
-    result = hook.get_first(sql)
+    result = hook.get_first(f"SELECT 1 FROM {table_name} WHERE ds = '{ds}'::DATE LIMIT 1")
     is_empty = result is None
-    print(f"[{table_name}] ds={ds} → {'пусто → продолжаем' if is_empty else 'уже есть данные → скип'}")
+    print(f"[{table_name}] ds={ds} → {'ПАРТИЦИЯ ПУСТА → продолжаем' if is_empty else 'УЖЕ ЕСТЬ ДАННЫЕ → скип'}")
     return is_empty
 
 with DAG(
@@ -46,58 +45,55 @@ with DAG(
     )
 
     @task
-    def ensure_table(agg: dict):
-        op = PostgresEnsureTableOperator(
-            task_id=f"ensure_table_{agg['table_name'].replace('.', '_')}",
-            table_name=agg["table_name"],
+    def process_aggregate(agg: dict):
+        table = agg["table_name"]
+        safe_id = table.replace(".", "_")
+
+        # 1. Создаём таблицу
+        ensure = PostgresEnsureTableOperator(
+            task_id=f"ensure_table_{safe_id}",
+            table_name=table,
             ddl_template=agg["table_ddl"],
             postgres_conn_id="conn_pg"
         )
-        op.execute(dict())
 
-    @task
-    def wait_empty_partition(agg: dict):
-        return PythonSensor(
-            task_id=f"wait_empty_{agg['table_name'].replace('.', '_')}",
-            python_callable=check_partition_empty,
-            op_kwargs={"table_name": agg["table_name"]},
-            poke_interval=60,
-            timeout=600,
-            mode="reschedule"
+        # 2. Проверяем — пустая ли партиция? (ShortCircuit — работает 100%)
+        check_empty = ShortCircuitOperator(
+            task_id=f"check_empty_{safe_id}",
+            python_callable=is_partition_empty,
+            op_kwargs={"table_name": table}
         )
 
-    @task
-    def load_data(agg: dict):
-        sql = Template(agg["table_dml"]).render(
-            table_name=agg["table_name"],
-            ds="{{ ds }}",
-            next_ds="{{ next_ds }}",
-        )
-        PostgresHook("conn_pg").run(sql)
+        # 3. Загружаем данные (только если пусто)
+        @task(task_id=f"load_data_{safe_id}")
+        def load_data():
+            sql = Template(agg["table_dml"]).render(
+                table_name=table,
+                ds="{{ ds }}",
+                next_ds="{{ next_ds }}",
+            )
+            PostgresHook("conn_pg").run(sql)
 
-    @task
-    def export_if_needed(agg: dict):
-        if not agg.get("need_to_export"):
-            return EmptyOperator(task_id=f"skip_export_{agg['table_name'].replace('.', '_')}")
-        export_path = Template(agg["export_path"]).render(
-            table_name=agg["table_name"].replace(".", "/")
-        )
-        return S3ExportCSVOperator(
-            task_id=f"export_{agg['table_name'].replace('.', '_')}",
-            table_name=agg["table_name"],
-            s3_path=export_path,
-            postgres_conn_id="conn_pg",
-            s3_conn_id="conn_s3"
-        )
+        load = load_data()
 
-    # === РАЗВОРАЧИВАНИЕ ===
-    ensure_tasks = ensure_table.expand(agg=load_config.output)
-    wait_tasks = wait_empty_partition.expand(agg=load_config.output)
-    load_tasks = load_data.expand(agg=load_config.output)
-    export_tasks = export_if_needed.expand(agg=load_config.output)
+        # 4. Экспорт (если нужно)
+        if agg.get("need_to_export"):
+            export_path = Template(agg["export_path"]).render(
+                table_name=table.replace(".", "/")
+            )
+            export = S3ExportCSVOperator(
+                task_id=f"export_{safe_id}",
+                table_name=table,
+                s3_path=export_path,
+                postgres_conn_id="conn_pg",
+                s3_conn_id="conn_s3"
+            )
+            ensure >> check_empty >> load >> export
+        else:
+            ensure >> check_empty >> load
 
-    # === ЗАВИСИМОСТИ ===
-    ensure_tasks >> wait_tasks >> load_tasks >> export_tasks
+    # === ЗАПУСК ВСЕХ АГРЕГАТОВ ===
+    process_aggregate.expand(agg=load_config.output)
 
     # === КРАСИВАЯ РАМКА ===
-    dag_start >> load_config >> ensure_tasks >> dag_end
+    dag_start >> load_config >> process_aggregate.expand(agg=load_config.output) >> dag_end
