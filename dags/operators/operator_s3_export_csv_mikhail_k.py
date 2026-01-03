@@ -9,7 +9,6 @@ from io import StringIO
 import logging
 
 class S3ExportCSVOperator(BaseOperator):
-
     template_fields = ("s3_path", "table_name")
 
     @apply_defaults
