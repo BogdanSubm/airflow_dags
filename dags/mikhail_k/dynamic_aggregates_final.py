@@ -57,7 +57,7 @@ with DAG(
 
     @task
     def wait_empty_partition(agg: dict):
-        return PythonSensor(
+        sensor = PythonSensor(
             task_id=f"wait_empty_{agg['table_name'].replace('.', '_')}",
             python_callable=check_partition_empty,
             op_kwargs={"table_name": agg["table_name"]},
@@ -65,6 +65,7 @@ with DAG(
             timeout=600,
             mode="reschedule"
         )
+        sensor.execute(context={})
 
     @task
     def load_data(agg: dict):
@@ -78,17 +79,18 @@ with DAG(
     @task
     def export_if_needed(agg: dict):
         if not agg.get("need_to_export"):
-            return EmptyOperator(task_id=f"skip_export_{agg['table_name'].replace('.', '_')}")
+            return  # просто ничего не делаем
         export_path = Template(agg["export_path"]).render(
             table_name=agg["table_name"].replace(".", "/")
         )
-        return S3ExportCSVOperator(
+        op = S3ExportCSVOperator(
             task_id=f"export_{agg['table_name'].replace('.', '_')}",
             table_name=agg["table_name"],
             s3_path=export_path,
             postgres_conn_id="conn_pg",
             s3_conn_id="conn_s3"
         )
+        op.execute(context={})
 
     # === РАЗВОРАЧИВАНИЕ ===
     ensure_tasks = ensure_table.expand(agg=load_config.output)
