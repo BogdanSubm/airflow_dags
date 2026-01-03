@@ -1,7 +1,7 @@
 # dags/dynamic_aggregates_final.py
 from datetime import datetime, timedelta
 from airflow import DAG
-from airflow.decorators import task_group
+from airflow.decorators import task, task_group 
 from airflow.operators.empty import EmptyOperator
 from operators.operator_s3_load_config_mikhail_k import S3LoadConfigOperator
 from operators.operator_postgres_ensure_table_mikhail_k import PostgresEnsureTableOperator
@@ -36,13 +36,13 @@ with DAG(
         key="agg_config.conf",
         conn_id="conn_s3"
     )
- # 2. Динамически создаём задачи для каждого агрегата
+    # Задача-шаблон: создаёт все нужные задачи для одного агрегата
     @task
-    def create_tasks_for_aggregate(agg: dict):
+    def process_one_aggregate(agg: dict):
         table = agg["table_name"]
         safe_id = table.replace(".", "_")
 
-        # Создаём задачи
+        # Создание таблицы
         ensure = PostgresEnsureTableOperator(
             task_id=f"ensure_table_{safe_id}",
             table_name=table,
@@ -50,22 +50,33 @@ with DAG(
             postgres_conn_id="conn_pg"
         )
 
+        # Ожидание, что данные за ds пустые
         wait = PostgresCheckEmptyPartitionSensor(
             task_id=f"wait_empty_{safe_id}",
             table_name=table,
             postgres_conn_id="conn_pg"
         )
 
+        # Загрузка данных
         @task(task_id=f"load_data_{safe_id}")
-        def load_data(dml: str):
+        def load_data(dml_template: str):
             from airflow.providers.postgres.hooks.postgres import PostgresHook
-            sql = Template(dml).render(table_name=table, ds="{{ ds }}", next_ds="{{ next_ds }}")
+            sql = Template(dml_template).render(
+                table_name=table,
+                ds="{{ ds }}",
+                next_ds="{{ next_ds }}",
+                prev_ds="{{ prev_ds }}",
+            )
             PostgresHook("conn_pg").run(sql)
 
         load = load_data(agg["table_dml"])
 
+        # Экспорт в S3, если нужно
         if agg.get("need_to_export"):
-            export_path = Template(agg["export_path"]).render(table_name=table.replace(".", "/"))
+            export_path = Template(agg["export_path"]).render(
+                table_name=table.replace(".", "/"),
+                ds="{{ ds }}"
+            )
             export = S3ExportCSVOperator(
                 task_id=f"export_{safe_id}",
                 table_name=table,
