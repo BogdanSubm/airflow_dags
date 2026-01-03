@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.decorators import task
 from airflow.operators.empty import EmptyOperator
-from airflow.sensors.python import PythonSensor
+from airflow.operators.python import ShortCircuitOperator
 from operators.operator_s3_load_config_mikhail_k import S3LoadConfigOperator
 from operators.operator_postgres_ensure_table_mikhail_k import PostgresEnsureTableOperator
 from operators.operator_s3_export_csv_mikhail_k import S3ExportCSVOperator
