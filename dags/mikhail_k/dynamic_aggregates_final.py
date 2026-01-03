@@ -83,7 +83,8 @@ with DAG(
             return
         
         export_path = Template(agg["export_path"]).render(
-            table_name=agg["table_name"].replace(".", "/")
+            table_name=agg["table_name"].replace(".", "/"),
+            ds=context["ds"]
         )
         
         op = S3ExportCSVOperator(
