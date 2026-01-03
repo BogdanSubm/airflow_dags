@@ -84,11 +84,12 @@ with DAG(
                 postgres_conn_id="conn_pg",
                 s3_conn_id="conn_s3"
             )
-            return export
+            ensure >> wait >> load >> export
         else:
-            return load
-    
-    # Разворачиваем все агрегаты
-    all_aggregate_tasks = process_one_aggregate.expand(agg=load_config.output)
+            ensure >> wait >> load
 
-    dag_start >> load_config >> all_aggregate_tasks >> dag_end
+        return None 
+    # Разворачиваем все агрегаты
+    expanded_tasks = process_one_aggregate.expand(agg=load_config.output)
+
+    dag_start >> load_config >> expanded_tasks >> dag_end
