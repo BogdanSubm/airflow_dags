@@ -1,6 +1,7 @@
 # dags/mikhail_k/dynamic_aggregates_final.py
 from datetime import datetime, timedelta
 from airflow import DAG
+from airflow.utils.context import Context
 from airflow.decorators import task
 from airflow.operators.empty import EmptyOperator
 from airflow.sensors.python import PythonSensor
@@ -67,7 +68,7 @@ with DAG(
             timeout=600,
             mode="reschedule"
         )
-        sensor.execute(context={})
+        sensor.execute(Context({"ds": "{{ ds }}", "execution_date": "{{ execution_date }}"}))
 
     @task
     def load_data(agg: dict):
