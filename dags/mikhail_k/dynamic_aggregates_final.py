@@ -69,9 +69,11 @@ with DAG(
         )
 
     @task
-    def load_data(agg: dict):
+    def load_data(agg: dict, **context):
+        ds = context["ds"]  # БЕРЁМ ИЗ КОНТЕКСТА
         sql = Template(agg["table_dml"]).render(
-            table_name=agg["table_name"]
+            table_name=agg["table_name"],
+            ds=ds  # ← передаём как переменную
         )
         PostgresHook("conn_pg").run(sql)
 
