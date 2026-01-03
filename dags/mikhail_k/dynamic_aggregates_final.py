@@ -1,7 +1,6 @@
 # dags/mikhail_k/dynamic_aggregates_final.py
 from datetime import datetime, timedelta
 from airflow import DAG
-from airflow.utils.context import Context
 from airflow.decorators import task
 from airflow.operators.empty import EmptyOperator
 from airflow.sensors.python import PythonSensor
@@ -68,7 +67,6 @@ with DAG(
             timeout=600,
             mode="reschedule"
         )
-        sensor.execute(Context({"ds": "{{ ds }}", "execution_date": "{{ execution_date }}"}))
 
     @task
     def load_data(agg: dict):
@@ -93,7 +91,6 @@ with DAG(
             postgres_conn_id="conn_pg",
             s3_conn_id="conn_s3"
         )
-        op.execute(context={})
 
     # === РАЗВОРАЧИВАНИЕ ===
     ensure_tasks = ensure_table.expand(agg=load_config.output)
