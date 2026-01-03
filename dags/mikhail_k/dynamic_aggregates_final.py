@@ -3,11 +3,21 @@ from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.decorators import task
 from airflow.operators.empty import EmptyOperator
+from airflow.sensors.python import PythonSensor
 from operators.operator_s3_load_config_mikhail_k import S3LoadConfigOperator
 from operators.operator_postgres_ensure_table_mikhail_k import PostgresEnsureTableOperator
-from sensors.sensor_postgres_check_empty_partition_mikhail_k import PostgresCheckEmptyPartitionSensor
 from operators.operator_s3_export_csv_mikhail_k import S3ExportCSVOperator
+from airflow.providers.postgres.hooks.postgres import PostgresHook
 from jinja2 import Template
+
+def check_partition_empty(table_name: str, **context):
+    ds = context["ds"]
+    hook = PostgresHook("conn_pg")
+    sql = f"SELECT 1 FROM {table_name} WHERE ds = '{ds}'::DATE LIMIT 1"
+    result = hook.get_first(sql)
+    is_empty = result is None
+    print(f"[{table_name}] ds={ds} → {'пусто → продолжаем' if is_empty else 'уже есть данные → скип'}")
+    return is_empty
 
 with DAG(
     dag_id="dynamic_aggregates_final",
@@ -35,7 +45,6 @@ with DAG(
         conn_id="conn_s3"
     )
 
-    # ЭТИ ЗАДАЧИ СОЗДАЮТСЯ НА УРОВНЕ DAG — НЕ ВНУТРИ @task
     @task
     def ensure_table(agg: dict):
         op = PostgresEnsureTableOperator(
@@ -44,20 +53,21 @@ with DAG(
             ddl_template=agg["table_ddl"],
             postgres_conn_id="conn_pg"
         )
-        op.execute({})
+        op.execute(dict())
 
     @task
-    def wait_empty(agg: dict):
-        op = PostgresCheckEmptyPartitionSensor(
+    def wait_empty_partition(agg: dict):
+        return PythonSensor(
             task_id=f"wait_empty_{agg['table_name'].replace('.', '_')}",
-            table_name=agg["table_name"],
-            postgres_conn_id="conn_pg"
+            python_callable=check_partition_empty,
+            op_kwargs={"table_name": agg["table_name"]},
+            poke_interval=60,
+            timeout=600,
+            mode="reschedule"
         )
-        op.execute({})
 
     @task
     def load_data(agg: dict):
-        from airflow.providers.postgres.hooks.postgres import PostgresHook
         sql = Template(agg["table_dml"]).render(
             table_name=agg["table_name"],
             ds="{{ ds }}",
@@ -68,27 +78,26 @@ with DAG(
     @task
     def export_if_needed(agg: dict):
         if not agg.get("need_to_export"):
-            return
+            return EmptyOperator(task_id=f"skip_export_{agg['table_name'].replace('.', '_')}")
         export_path = Template(agg["export_path"]).render(
             table_name=agg["table_name"].replace(".", "/")
         )
-        op = S3ExportCSVOperator(
+        return S3ExportCSVOperator(
             task_id=f"export_{agg['table_name'].replace('.', '_')}",
             table_name=agg["table_name"],
             s3_path=export_path,
             postgres_conn_id="conn_pg",
             s3_conn_id="conn_s3"
         )
-        op.execute({})
 
-    # ДИНАМИЧЕСКОЕ РАЗВОРАЧИВАНИЕ
+    # === РАЗВОРАЧИВАНИЕ ===
     ensure_tasks = ensure_table.expand(agg=load_config.output)
-    wait_tasks = wait_empty.expand(agg=load_config.output)
+    wait_tasks = wait_empty_partition.expand(agg=load_config.output)
     load_tasks = load_data.expand(agg=load_config.output)
     export_tasks = export_if_needed.expand(agg=load_config.output)
 
-    # ЗАВИСИМОСТИ
+    # === ЗАВИСИМОСТИ ===
     ensure_tasks >> wait_tasks >> load_tasks >> export_tasks
 
-    # КРАСИВАЯ РАМКА
+    # === КРАСИВАЯ РАМКА ===
     dag_start >> load_config >> ensure_tasks >> dag_end
