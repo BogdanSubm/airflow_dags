@@ -92,11 +92,14 @@ with DAG(
             s3_conn_id="conn_s3"
         )
 
-    # === РАЗВОРАЧИВАНИЕ ===
+    # РАЗВОРАЧИВАНИЕ
     ensure_tasks = ensure_table.expand(agg=load_config.output)
     wait_tasks = wait_empty_partition.expand(agg=load_config.output)
     load_tasks = load_data.expand(agg=load_config.output)
     export_tasks = export_if_needed.expand(agg=load_config.output)
 
-    # === ЗАВИСИМОСТИ ===
+    # ЗАВИСИМОСТИ
+    ensure_tasks >> wait_tasks >> load_tasks >> export_tasks
+
+    # ИДЕАЛЬНЫЙ ГРАФ — ОДНА СТРОЧКА
     dag_start >> load_config >> ensure_tasks >> [load_tasks, export_tasks] >> dag_end
