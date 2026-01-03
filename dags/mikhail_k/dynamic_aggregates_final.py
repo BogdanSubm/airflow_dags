@@ -1,0 +1,83 @@
+# dags/dynamic_aggregates_final.py
+from datetime import datetime, timedelta
+from airflow import DAG
+from airflow.decorators import task_group
+from airflow.operators.empty import EmptyOperator
+from operators.operator_s3_load_config_mikhail_k import S3LoadConfigOperator
+from operators.operator_postgres_ensure_table_mikhail_k import PostgresEnsureTableOperator
+from sensors.sensor_postgres_check_empty_partition_mikhail_k import PostgresCheckEmptyPartitionSensor
+from operators.operator_s3_export_csv_mikhail_k import S3ExportCSVOperator
+from jinja2 import Template
+
+with DAG(
+    dag_id="dynamic_aggregates_final",
+    description="Финальная версия - полная динамика + сенсоры + защита от дублей",
+    schedule_interval="0 5 * * *",
+    start_date=datetime(2024, 1, 1),
+    catchup=False,
+    max_active_runs=1,
+    default_args={
+        "owner": "mikhail_k",
+        "retries": 1,
+        "retry_delay": timedelta(minutes=5),
+    },
+    tags=["aggregates", "dynamic", "mikhail_k"],
+    render_template_as_native_obj=True,
+) as dag:
+    
+    dag_start = EmptyOperator(task_id='dag_start')
+
+    dag_end = EmptyOperator(task_id='dag_end')
+
+    load_config = S3LoadConfigOperator(
+        task_id="load_config_from_s3",
+        bucket="mikhail-k",
+        key="agg_config.conf",
+        conn_id="conn_s3"
+    )
+
+    @task_group(group_id="process_aggregates")
+    def process_aggregates(config: list):
+        for agg in config:
+            table = agg["table_name"]
+            safe_id = table.replace(".", "_")
+
+            ensure = PostgresEnsureTableOperator(
+                task_id=f"ensure_table_{safe_id}",
+                table_name=table,
+                ddl_template=agg["table_ddl"],
+                postgres_conn_id="conn_pg"
+            )
+
+            wait_empty = PostgresCheckEmptyPartitionSensor(
+                task_id=f"wait_empty_{safe_id}",
+                table_name=table,
+                postgres_conn_id="conn_pg"
+            )
+
+            @task(task_id=f"load_data_{safe_id}")
+            def load_data(dml: str):
+                from airflow.providers.postgres.hooks.postgres import PostgresHook
+                sql = Template(dml).render(
+                    table_name=table,
+                    ds="{{ ds }}",
+                    next_ds="{{ next_ds }}"
+                )
+                PostgresHook("conn_pg").run(sql)
+
+            load = load_data(agg["table_dml"])
+
+            if agg.get("need_to_export"):
+                export_path = Template(agg["export_path"]).render(table_name=table.replace(".", "/"))
+                export = S3ExportCSVOperator(
+                    task_id=f"export_{safe_id}",
+                    table_name=table,
+                    s3_path=export_path,
+                    postgres_conn_id="conn_pg",
+                    s3_conn_id="conn_s3"
+                )
+                dag_start >> ensure >> wait_empty >> load >> export >> dag_end
+            else:
+                dag_start >> ensure >> wait_empty >> load >> dag_end
+
+    process_aggregates(load_config.output)
