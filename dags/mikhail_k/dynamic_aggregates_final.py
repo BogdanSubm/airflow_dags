@@ -28,10 +28,12 @@ def check_partition_empty(table_name: str, **context):
 with DAG(
     dag_id="dynamic_aggregates_final",
     description="Финальная версия - полная динамика + сенсоры + защита от дублей",
-    schedule='@daily',
+    schedule='@daily',   # ежедневное выполнение
     start_date=datetime(2024, 1, 1),
+    timeout=3600,        # 1 час максимум
+    poke_interval=300,   # проверять раз в 5 минут   
     catchup=False,
-    max_active_runs=1,
+    max_active_runs=3,   # если вдруг не успеет выполниться
     default_args=DEFAULT_ARGS,
     tags=["aggregates", "dynamic", "mikhail_k"],
     render_template_as_native_obj=True,
