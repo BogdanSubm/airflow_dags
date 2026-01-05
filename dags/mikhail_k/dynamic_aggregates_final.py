@@ -30,7 +30,6 @@ with DAG(
     description="Финальная версия - полная динамика + сенсоры + защита от дублей",
     schedule='@daily',   # ежедневное выполнение
     start_date=datetime(2024, 1, 1),
-    timeout=3600,        # 1 час максимум
     poke_interval=300,   # проверять раз в 5 минут   
     catchup=False,
     max_active_runs=3,   # если вдруг не успеет выполниться
