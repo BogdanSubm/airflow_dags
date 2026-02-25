@@ -6,10 +6,10 @@ from airflow.operators.python import PythonOperator
 from airflow.hooks.base import BaseHook
 
 DEFAULT_ARGS = {
-    'owner': 'admin',
+    'owner': 'spiridonov_a',
     'retries': 2,
     'retry_delay': 600,
-    'start_date': datetime(2021, 1, 1),
+    'start_date': datetime(2024, 11, 12),
 }
 
 API_URL = 'https://b2b.itresume.ru/api/statistics'
@@ -61,8 +61,8 @@ def load_from_api(**context):
 
 
 with DAG(
-    dag_id='spiridonov_lesson_8_dag',
-    tags=['4', 'admin'],
+    dag_id='spiridonov_a_lesson_8_dag',
+    tags=['spiridonov', '8'],
     schedule='@daily',
     default_args=DEFAULT_ARGS,
     max_active_runs=1,
