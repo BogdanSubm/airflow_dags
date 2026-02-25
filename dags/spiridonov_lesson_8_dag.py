@@ -61,7 +61,7 @@ def load_from_api(**context):
 
 
 with DAG(
-    dag_id='lesson_8_dag',
+    dag_id='spiridonov_lesson_8_dag',
     tags=['4', 'admin'],
     schedule='@daily',
     default_args=DEFAULT_ARGS,
