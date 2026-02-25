@@ -55,7 +55,7 @@ def load_from_api(**context):
             row.append(passback_params.get('lis_result_sourcedid'))
             row.append(passback_params.get('lis_outcome_service_url'))
 
-            cursor.execute("INSERT INTO spiridonov_admin_table_8 VALUES (%s, %s, %s, %s, %s, %s, %s, %s)", row)
+            cursor.execute("INSERT INTO spiridonov_admin_table_8 VALUES (%s, %s, %s, %s, %s, %s, %s)", row)
 
         conn.commit()
 
