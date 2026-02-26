@@ -85,6 +85,7 @@ def save_raw_data(data, week_start, week_end):
         conn.commit()
 
 def agg_week_data(**context):
+    import psycopg2 as pg
     week_start = context['ti'].xcom_pull(key='week_start')
     week_end = context['ti'].xcom_pull(key='week_end')
 
