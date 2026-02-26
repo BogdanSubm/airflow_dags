@@ -51,7 +51,7 @@ def save_raw_to_minio(**context):
 
     minio_hook = S3Hook(
         aws_conn_id='conn_s3',
-        endpoint_url='http://95.163.241.236:9001/'
+        endpoint_url='http://95.163.241.236:9001'
     )
 
     json_data = json.dumps(data, indent=2, default=str)
@@ -61,7 +61,7 @@ def save_raw_to_minio(**context):
     minio_hook.load_string(
         string_data=json_data,
         key=file_name,
-        bucket_name='airflow-raw-data',
+        bucket_name='default-storage',
         replace=True,
     )
 
@@ -73,7 +73,7 @@ def save_raw_to_minio(**context):
     minio_hook.load_string(
         string_data=csv_buffer.getvalue(),
         key=csv_file_name,
-        bucket_name='airflow-raw-data',
+        bucket_name='default-storage',
         replace=True,
     )
 
@@ -92,7 +92,7 @@ def save_raw_to_pg(**context):
         dbname='etl',
         user=connection.login,
         password=connection.password,
-        hostkey=connection.hostkey,
+        host=connection.host,
         port=connection.port
     ) as conn:
         cursor = conn.cursor()
@@ -198,7 +198,7 @@ def save_agg_to_minio(agg_data, week_start, week_end, context):
     minio_hook.load_string(
         string_data=json_data,
         key=file_name,
-        bucket_name='airflow_aggregates',
+        bucket_name='default-storage',
         replace=True
     )
 
@@ -210,7 +210,7 @@ def save_agg_to_minio(agg_data, week_start, week_end, context):
     minio_hook.load_string(
         string_data=csv_buffer.getvalue(),
         key=csv_file_name,
-        bucket_name='airflow_aggregates',
+        bucket_name='default-storage',
         replace=True
     )
 
