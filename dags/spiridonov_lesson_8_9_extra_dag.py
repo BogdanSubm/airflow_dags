@@ -253,4 +253,4 @@ with DAG(
 
     save_to_pg >> aggregate
 
-    [save_to_minio, save_to_pg] >> end
+    [save_to_minio, aggregate] >> end
