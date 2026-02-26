@@ -92,7 +92,7 @@ def save_raw_to_pg(**context):
         dbname='etl',
         user=connection.login,
         password=connection.password,
-        hostkey=connection.hostkey,
+        host=connection.host,
         port=connection.port
     ) as conn:
         cursor = conn.cursor()
