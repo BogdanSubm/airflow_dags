@@ -124,7 +124,7 @@ def agg_week_data(**context):
 with DAG(
     dag_id='spiridonov_lesson_8_9',
     tags=['spiridonov'],
-    schedule=0 0 * * 1',
+    schedule='0 0 * * 1',
     default_args=DEFAULT_ARGS,
     max_active_runs=1,
     max_active_tasks=1
