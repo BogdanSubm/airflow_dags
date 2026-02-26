@@ -114,7 +114,7 @@ def agg_week_data(**context):
                 SUM(CASE WHEN is_correct THEN 1 ELSE 0 END) as correct_attempts,
                 AVG(CASE WHEN is_correct THEN 1 ELSE 0 END) * 100 as success_rate,
                 COUNT(DISTINCT lti_user_id) AS unique_users,
-                COUNT(*)::float / COUNT(DISTINC lti_user_id) as attempts_per_user_avg,
+                COUNT(*)::float / COUNT(DISTINCT lti_user_id) as attempts_per_user_avg,
                 MIN(created_at) as min_created_at,
                 max(created_at) as max_created_at
             FROM spiridonov_agg_table_8_9_stats
