@@ -63,7 +63,7 @@ def save_raw_data(data, week_start, week_end):
         """, (week_start, week_end))
 
         for record in data:
-            passback_params = ast.literal_eval(record.get('passback_params', '{}'))
+            passback_params = ast.literal_eval(record.get('passback_params') if record.get('passback_params') else '{}')
             cursor.execute(f"""
                 INSERT INTO spiridonov_table_8_9_raw
                 (lti_user_id, is_correct, attempt_type, created_at, 

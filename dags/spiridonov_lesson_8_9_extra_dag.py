@@ -80,6 +80,7 @@ def save_raw_to_minio(**context):
     print('Данные загружены в Minio')
 
 def save_raw_to_pg(**context):
+    import ast
     ti=context['ti']
     data = ti.xcom_pull(key='raw_data')
     week_start = ti.xcom_pull(key='week_start')
@@ -102,7 +103,7 @@ def save_raw_to_pg(**context):
         ''', (week_start, week_end))
 
         for record in data:
-            passback_params = record.get('passback_params', {})
+            passback_params = ast.literal_eval(record.get('passback_params') if record.get('passback_params') else '{}')
             cursor.execute("""
                            INSERT INTO spiridonov_table_8_9_extra_raw
                            (lti_user_id, is_correct, attempt_type, created_at,
