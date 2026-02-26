@@ -52,13 +52,13 @@ def upload_data(**context):
         delimiter='\t',
         lineterminator='\n',
         quotechar='"',
-        quoting=csv.QUOTE_MINIMAL,
+        quoting=csv.QUOTE_MINIMAL
     )
 
     writer.writerows(data)
     file.seek(0)
 
-    connection = BaseHook.get_connection('conn_pg')
+    connection = BaseHook.get_connection('conn_s3')
 
     s3_client = s3.client(
         's3',
