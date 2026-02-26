@@ -44,6 +44,7 @@ def load_weekly_data(**context):
 
 def save_raw_data(data, week_start, week_end):
     import psycopg2 as pg
+    import ast
 
     connection = BaseHook.get_connection('conn_pg')
 
