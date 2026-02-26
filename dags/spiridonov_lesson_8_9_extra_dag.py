@@ -97,14 +97,14 @@ def save_raw_to_pg(**context):
         cursor = conn.cursor()
 
         cursor.execute('''
-            DELETE FROM spiridonov_table_8_9_raw
+            DELETE FROM spiridonov_table_8_9_extra_raw
             WHERE week_start = %s AND week_end = %s
         ''', (week_start, week_end))
 
         for record in data:
             passback_params = record.get('passback_params', {})
             cursor.execute("""
-                           INSERT INTO spiridonov_raw_statistics
+                           INSERT INTO spiridonov_table_8_9_extra_raw
                            (lti_user_id, is_correct, attempt_type, created_at,
                             oauth_consumer_key, lis_result_sourcedid, lis_outcome_service_url,
                             week_start, week_end, loaded_at)
@@ -139,12 +139,12 @@ def agg_week_data(**context):
     ) as conn:
         cursor = conn.cursor()
         cursor.execute(f"""
-            DELETE FROM spiridonov_agg_table_8_9_stats
+            DELETE FROM spiridonov_agg_table_8_9_extra_stats
             WHERE week_start = %s and week_end = %s
         """, (week_start, week_end))
 
         cursor.execute(f"""
-            INSERT INTO spiridonov_agg_table_8_9_stats
+            INSERT INTO spiridonov_agg_table_8_9_extra_stats
             (week_start, week_end, total_attempts, correct_attempts, success_rate,
             unique_users, attempts_per_user_avg, min_created_at, max_created_at)
             SELECT
@@ -156,14 +156,14 @@ def agg_week_data(**context):
                 COUNT(*)::float / COUNT(DISTINC lti_user_id) as attempts_per_user_avg,
                 MIN(created_at) as min_created_at,
                 max(created_at) as max_created_at
-            FROM spiridonov_agg_table_8_9_stats
+            FROM spiridonov_agg_table_8_9_extra_stats
             WHERE week_start = %s and week_end = %s
         """, (week_start, week_end, week_start, week_end))
 
         conn.commit()
 
         cursor.execute(f"""
-            SELECT * FROM spiridonov_agg_table_8_9_stats
+            SELECT * FROM spiridonov_agg_table_8_9_extra_stats
             WHERE week_start = %s and week_end = %s
         """, (week_start, week_end))
 
@@ -217,6 +217,7 @@ def save_agg_to_minio(agg_data, week_start, week_end, context):
 
 with DAG(
     dag_id='spiridonov_extra_8_9',
+    tags=['spiridonov'],
     schedule='0 0 * * 1',
     default_args=DEFAULT_ARGS,
     max_active_runs=1,
