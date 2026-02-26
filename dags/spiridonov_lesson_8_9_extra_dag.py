@@ -176,7 +176,7 @@ def agg_week_data(**context):
 def save_agg_to_minio(agg_data, week_start, week_end, context):
     minio_hook = S3Hook(
         aws_conn_id='conn_s3',
-        endpoint_url='http://95.163.241.236:9001/'
+        endpoint_url='http://95.163.241.236:9001'
     )
 
     agg_dict = {
