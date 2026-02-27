@@ -44,24 +44,31 @@ def fetch_data_from_api(**context):
     return len(data)
 
 def save_raw_to_minio(**context):
+    import boto3# as s3
+    from botocore.client import Config
+
     ti=context['ti']
     data = ti.xcom_pull(key='raw_data')
     week_start = ti.xcom_pull(key='week_start')
     week_end = ti.xcom_pull(key='week_end')
 
-    minio_hook = S3Hook(
-        aws_conn_id='conn_s3'
+    connection = BaseHook.get_connection('conn_s3')
+    s3_client = boto3.client(
+        's3',
+        endpoint_url=connection.host,
+        aws_access_key_id=connection.login,
+        aws_secret_access_key=connection.password,
+        config=Config(signature_version='s3v4'),
     )
 
     json_data = json.dumps(data, indent=2, default=str)
 
     file_name = f'week_{week_start}_to_{week_end}.json'
 
-    minio_hook.load_string(
-        string_data=json_data,
+    s3_client.put_object(
         key=file_name,
         bucket_name='default-storage',
-        replace=True,
+        body=json_data.encode('utf-8'),
     )
 
     df = pd.DataFrame(data)
@@ -69,11 +76,10 @@ def save_raw_to_minio(**context):
     df.to_csv(csv_buffer, index=False)
 
     csv_file_name = f'week_{week_start}_to_{week_end}.csv'
-    minio_hook.load_string(
-        string_data=csv_buffer.getvalue(),
+    s3_client.put_object(
+        body=csv_buffer.getvalue().encode('utf-8'),
         key=csv_file_name,
         bucket_name='default-storage',
-        replace=True,
     )
 
     print('Данные загружены в Minio')
@@ -138,6 +144,24 @@ def agg_week_data(**context):
         port=connection.port,
     ) as conn:
         cursor = conn.cursor()
+
+
+
+        cursor.execute("""
+                       SELECT COUNT(*)
+                       FROM spiridonov_table_8_9_raw
+                       WHERE week_start = %s
+                         and week_end = %s
+                       """, (week_start, week_end))
+
+        count = cursor.fetchone()[0]
+
+        if count == 0:
+            print(f"Нет данных за период {week_start} - {week_end}, пропускаем агрегацию")
+            return
+
+
+
         cursor.execute(f"""
             DELETE FROM spiridonov_agg_table_8_9_extra_stats
             WHERE week_start = %s and week_end = %s
@@ -173,9 +197,17 @@ def agg_week_data(**context):
         save_agg_to_minio(agg_data, week_start, week_end, context)
 
 def save_agg_to_minio(agg_data, week_start, week_end, context):
-    minio_hook = S3Hook(
-        aws_conn_id='conn_s3',
-        endpoint_url='http://95.163.241.236:9001'
+    import boto3# as s3
+    from botocore.client import Config
+
+    connection = BaseHook.get_connection('conn_s3')
+
+    s3_client = boto3.client(
+        's3',
+        endpoint_url=connection.host,
+        aws_access_key_id=connection.login,
+        aws_secret_access_key=connection.password,
+        config=Config(signature_version='s3v4'),
     )
 
     agg_dict = {
@@ -194,11 +226,10 @@ def save_agg_to_minio(agg_data, week_start, week_end, context):
     json_data = json.dumps(agg_dict, indent=2)
     file_name = f'agg_week_{week_start}_to_{week_end}.json'
 
-    minio_hook.load_string(
-        string_data=json_data,
+    s3_client.put_object(
+        body=json_data.encode('utf-8'),
         key=file_name,
         bucket_name='default-storage',
-        replace=True
     )
 
     df = pd.DataFrame([agg_dict])

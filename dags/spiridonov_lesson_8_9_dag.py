@@ -99,6 +99,24 @@ def agg_week_data(**context):
         port=connection.port,
     ) as conn:
         cursor = conn.cursor()
+
+
+
+        cursor.execute("""
+                       SELECT COUNT(*)
+                       FROM spiridonov_table_8_9_raw
+                       WHERE week_start = %s
+                         and week_end = %s
+                       """, (week_start, week_end))
+
+        count = cursor.fetchone()[0]
+
+        if count == 0:
+            print(f"Нет данных за период {week_start} - {week_end}, пропускаем агрегацию")
+            return
+
+
+
         cursor.execute(f"""
             DELETE FROM spiridonov_agg_table_8_9_stats
             WHERE week_start = %s and week_end = %s
