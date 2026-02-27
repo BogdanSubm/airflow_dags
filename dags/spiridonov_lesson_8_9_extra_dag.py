@@ -66,9 +66,9 @@ def save_raw_to_minio(**context):
     file_name = f'week_{week_start}_to_{week_end}.json'
 
     s3_client.put_object(
-        key=file_name,
-        bucket_name='default-storage',
-        body=json_data.encode('utf-8'),
+        Key=file_name,
+        Bucket='default-storage',
+        Body=json_data.encode('utf-8'),
     )
 
     df = pd.DataFrame(data)
@@ -77,9 +77,9 @@ def save_raw_to_minio(**context):
 
     csv_file_name = f'week_{week_start}_to_{week_end}.csv'
     s3_client.put_object(
-        body=csv_buffer.getvalue().encode('utf-8'),
-        key=csv_file_name,
-        bucket_name='default-storage',
+        Body=csv_buffer.getvalue().encode('utf-8'),
+        Key=csv_file_name,
+        Bucket='default-storage',
     )
 
     print('Данные загружены в Minio')
