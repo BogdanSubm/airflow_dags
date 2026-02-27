@@ -19,7 +19,7 @@ DEFAULT_ARGS = {
 
 API_URL = 'https://b2b.itresume.ru/api/statistics'
 
-def fetch_data_from_api(**context):
+def fetch_data_from_api(week_start, week_end, **context):
     import requests
     import pendulum
 
