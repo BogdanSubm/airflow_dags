@@ -227,9 +227,9 @@ def save_agg_to_minio(agg_data, week_start, week_end, context):
     file_name = f'agg_week_{week_start}_to_{week_end}.json'
 
     s3_client.put_object(
-        body=json_data.encode('utf-8'),
-        key=file_name,
-        bucket_name='default-storage',
+        Body=json_data.encode('utf-8'),
+        Key=file_name,
+        Bucker='default-storage',
     )
 
     df = pd.DataFrame([agg_dict])
