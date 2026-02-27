@@ -9,17 +9,39 @@ import psycopg2 as pg
 import pandas as pd
 import json
 import io
+import calendar
+
+class MonthTemplates:
+    @staticmethod
+    def start_of_month(date) -> str:
+        logical_dt = datetime.strptime(date, '%Y-%m-%d')
+        first_day = logical_dt.replace(day=1)
+        return first_day.strftime('%Y-%m-%d')
+    @staticmethod
+    def end_of_month(date) -> str:
+        logical_dt = datetime.strptime(date, '%Y-%m-%d')
+        last_day_num = calendar.monthrange(logical_dt.year, logical_dt.month)[1]
+        last_day = logical_dt.replace(day=last_day_num)
+        return last_day.strftime('%Y-%m-%d')
+    @staticmethod
+    def month_name(date) -> str:
+        logical_dt = datetime.strptime(date, '%Y-%m-%d')
+        return logical_dt.strftime('%B').lower()
+    @staticmethod
+    def month_period(date) -> str:
+        logical_dt = datetime.strptime(date, '%Y-%m-%d')
+        return logical_dt.strftime('%Y-%m')
 
 DEFAULT_ARGS = {
     'owner': 'spiridonov_a',
     'retries': 2,
     'retry_delay': 600,
-    'start_date': datetime(2024, 11, 11),
+    'start_date': datetime(2024, 11, 1),
 }
 
 API_URL = 'https://b2b.itresume.ru/api/statistics'
 
-def fetch_data_from_api(week_start, week_end, **context):
+def fetch_monthly_data(month_start, month_end, **context):
     import requests
     import pendulum
 
@@ -30,8 +52,8 @@ def fetch_data_from_api(week_start, week_end, **context):
     payload = {
         'client': 'Skillfactory',
         'client_key': 'M2MGWS',
-        'start': week_start,
-        'end': week_end,
+        'start': month_start,
+        'end': month_end,
     }
 
     response = requests.get(API_URL, params=payload)
@@ -43,12 +65,23 @@ def fetch_data_from_api(week_start, week_end, **context):
 
     return len(data)
 
-def save_raw_to_minio(week_start, week_end, **context):
+def save_month_csv(month_start, month_end, month_period, **context):
     import boto3# as s3
     from botocore.client import Config
 
     ti=context['ti']
     data = ti.xcom_pull(key='raw_data')
+
+    if not data:
+        print(f'Нет данных за период {month_start} - {month_end}')
+        return
+
+    df = pd.DataFrame(data)
+    df['month_start'] = month_start
+    df['month_end'] = month_end
+
+    csv_buffer = io.StringIO()
+    df.to_csv(csv_buffer, index=False)
     #week_start = ti.xcom_pull(key='week_start')
     #week_end = ti.xcom_pull(key='week_end')
 
@@ -61,33 +94,35 @@ def save_raw_to_minio(week_start, week_end, **context):
         config=Config(signature_version='s3v4'),
     )
 
-    json_data = json.dumps(data, indent=2, default=str)
-    file_name = f'week_{week_start}_to_{week_end}.json'
+    # json_data = json.dumps(data, indent=2, default=str)
+    # file_name = f'week_{week_start}_to_{week_end}.json'
+    #
+    # s3_client.put_object(
+    #     Key=file_name,
+    #     Bucket='default-storage',
+    #     Body=json_data.encode('utf-8'),
+    # )
+    #
+    # df = pd.DataFrame(data)
+    # csv_buffer = io.StringIO()
+    # df.to_csv(csv_buffer, index=False)
 
-    s3_client.put_object(
-        Key=file_name,
-        Bucket='default-storage',
-        Body=json_data.encode('utf-8'),
-    )
-
-    df = pd.DataFrame(data)
-    csv_buffer = io.StringIO()
-    df.to_csv(csv_buffer, index=False)
-
-    csv_file_name = f'week_{week_start}_to_{week_end}.csv'
+    file_name = f'spiridonov_{month_period}.csv'
     s3_client.put_object(
         Body=csv_buffer.getvalue().encode('utf-8'),
-        Key=csv_file_name,
+        Key=file_name,
         Bucket='default-storage',
     )
 
-    print(f'Данные за {week_start} - {week_end} загружены в Minio')
+    print(f'Данные за {month_period} загружены в Minio')
 
-def save_raw_to_pg(week_start, week_end, **context):
+    save_to_pg(data, month_start, month_end, month_period)
+
+def save_to_pg(data, month_start, month_end, month_period):
     import ast
-
-    ti=context['ti']
-    data = ti.xcom_pull(key='raw_data')
+    #
+    # ti=context['ti']
+    # data = ti.xcom_pull(key='raw_data')
     #week_start = ti.xcom_pull(key='week_start')
     #week_end = ti.xcom_pull(key='week_end')
 
@@ -103,18 +138,18 @@ def save_raw_to_pg(week_start, week_end, **context):
         cursor = conn.cursor()
 
         cursor.execute('''
-            DELETE FROM spiridonov_table_8_9_extra_raw
-            WHERE week_start = %s AND week_end = %s
-        ''', (week_start, week_end))
+            DELETE FROM spiridonov_les10_monthly_raw
+            WHERE month_period = %s
+        ''', (month_period))
 
         for record in data:
             passback_params = ast.literal_eval(record.get('passback_params') if record.get('passback_params') else '{}')
             cursor.execute("""
-                           INSERT INTO spiridonov_table_8_9_extra_raw
+                           INSERT INTO spiridonov_les10_monthly_raw
                            (lti_user_id, is_correct, attempt_type, created_at,
                             oauth_consumer_key, lis_result_sourcedid, lis_outcome_service_url,
-                            week_start, week_end, loaded_at)
-                           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
+                            month_start, month_end, month_period, loaded_at)
+                           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
                            """, (
                                record.get('lti_user_id'),
                                bool(record.get('is_correct', False)),
@@ -123,135 +158,23 @@ def save_raw_to_pg(week_start, week_end, **context):
                                passback_params.get('oauth_consumer_key'),
                                passback_params.get('lis_result_sourcedid'),
                                passback_params.get('lis_outcome_service_url'),
-                               week_start, week_end
+                               month_start, month_end, month_period
                            ))
 
             conn.commit()
 
         print('Сырые данные сохранены в PG')
 
-def agg_week_data(week_start, week_end, **context):
-    #week_start = context['ti'].xcom_pull(key='week_start')
-    #week_end = context['ti'].xcom_pull(key='week_end')
-
-    connection = BaseHook.get_connection('conn_pg')
-
-    with pg.connect(
-        dbname='etl',
-        user=connection.login,
-        password=connection.password,
-        host=connection.host,
-        port=connection.port,
-    ) as conn:
-        cursor = conn.cursor()
-
-
-
-        cursor.execute("""
-                       SELECT COUNT(*)
-                       FROM spiridonov_table_8_9_raw
-                       WHERE week_start = %s
-                         and week_end = %s
-                       """, (week_start, week_end))
-
-        count = cursor.fetchone()[0]
-
-        if count == 0:
-            print(f"Нет данных за период {week_start} - {week_end}, пропускаем агрегацию")
-            return
-
-
-
-        cursor.execute(f"""
-            DELETE FROM spiridonov_agg_table_8_9_extra_stats
-            WHERE week_start = %s and week_end = %s
-        """, (week_start, week_end))
-
-        cursor.execute(f"""
-            INSERT INTO spiridonov_agg_table_8_9_extra_stats
-            (week_start, week_end, total_attempts, correct_attempts, success_rate,
-            unique_users, attempts_per_user_avg, min_created_at, max_created_at)
-            SELECT
-                %s, %s,
-                COUNT(*) AS total_attempts,
-                SUM(CASE WHEN is_correct THEN 1 ELSE 0 END) as correct_attempts,
-                AVG(CASE WHEN is_correct THEN 1 ELSE 0 END) * 100 as success_rate,
-                COUNT(DISTINCT lti_user_id) AS unique_users,
-                COUNT(*)::float / NULLIF(COUNT(DISTINCT lti_user_id), 0) as attempts_per_user_avg,
-                MIN(created_at) as min_created_at,
-                MAX(created_at) as max_created_at
-            FROM spiridonov_table_8_9_extra_raw
-            WHERE week_start = %s and week_end = %s
-        """, (week_start, week_end, week_start, week_end))
-
-        conn.commit()
-
-        cursor.execute(f"""
-            SELECT * FROM spiridonov_agg_table_8_9_extra_stats
-            WHERE week_start = %s and week_end = %s
-        """, (week_start, week_end))
-
-        agg_data = cursor.fetchone()
-        conn.commit()
-
-        save_agg_to_minio(agg_data, week_start, week_end, context)
-
-def save_agg_to_minio(agg_data, week_start, week_end):
-    import boto3# as s3
-    from botocore.client import Config
-
-    connection = BaseHook.get_connection('conn_s3')
-
-    s3_client = boto3.client(
-        's3',
-        endpoint_url=connection.host,
-        aws_access_key_id=connection.login,
-        aws_secret_access_key=connection.password,
-        config=Config(signature_version='s3v4'),
-    )
-
-    agg_dict = {
-        'week_start': week_start,
-        'week_end': week_end,
-        'total_attempts': agg_data[2],
-        'correct_attempts': agg_data[3],
-        'success_rate': float(agg_data[4]),
-        'unique_users': agg_data[5],
-        'attempts_per_user_avg': float(agg_data[6]) if agg_data[6] else 0,
-        'min_created_at': str(agg_data[7]),
-        'max_created_at': str(agg_data[8]),
-        'calculated_at': datetime.now().isoformat()
-    }
-
-    json_data = json.dumps(agg_dict, indent=2)
-    file_name = f'agg_week_{week_start}_to_{week_end}.json'
-
-    s3_client.put_object(
-        Body=json_data.encode('utf-8'),
-        Key=file_name,
-        Bucket='default-storage',
-    )
-
-    df = pd.DataFrame([agg_dict])
-    csv_buffer = io.StringIO()
-    df.to_csv(csv_buffer, index=False)
-
-    csv_file_name = f'agg_week_{week_start}_to_{week_end}.csv'
-
-    s3_client.put_object(
-        Body=csv_buffer.getvalue().encode('utf-8'),
-        Key=csv_file_name,
-        Bucket='default-storage',
-    )
-
-    print('Аггрегация сохранена в minio')
-
 with DAG(
     dag_id='spiridonov_les_10_jinja',
     tags=['spiridonov'],
-    schedule='0 0 * * 1',
+    schedule='@daily',
     default_args=DEFAULT_ARGS,
     max_active_runs=1,
+    catchup=False,
+    user_defined_macros={
+        'month_templates': MonthTemplates
+    }
 ) as dag:
 
     start = EmptyOperator(task_id='start')
@@ -259,44 +182,23 @@ with DAG(
 
     fetch_data = PythonOperator(
         task_id='fetch_data',
-        python_callable=fetch_data_from_api,
+        python_callable=fetch_monthly_data,
         op_kwargs={
-            'week_start': '{{ ds }}',
-            'week_end': '{{ macros.ds_add(ds, 6) }}',
+            'month_start': '{{ month_templates.start_of_month(ds) }}',
+            'month_end': '{{ month_templates.end_of_month(ds) }}',
+            # 'week_start': '{{ ds }}',
+            # 'week_end': '{{ macros.ds_add(ds, 6) }}',
         }
     )
 
-    save_to_minio = PythonOperator(
-        task_id='save_to_minio',
-        python_callable=save_raw_to_minio,
+    save_csv = PythonOperator(
+        task_id='save_month_csv',
+        python_callable=save_month_csv,
         op_kwargs={
-            'week_start': '{{ ds }}',
-            'week_end': '{{ macros.ds_add(ds, 6) }}',
+            'month_start': '{{ month_templates.start_of_month(ds) }}',
+            'month_end': '{{ month_templates.end_of_month(ds) }}',
+            'month_period': '{{ month_templates.month_period(ds) }}',
         }
     )
 
-    save_to_pg = PythonOperator(
-        task_id='save_to_pg',
-        python_callable=save_raw_to_pg,
-        op_kwargs={
-            'week_start': '{{ ds }}',
-            'week_end': '{{ macros.ds_add(ds, 6) }}',
-        }
-    )
-
-    aggregate = PythonOperator(
-        task_id='aggregate_data',
-        python_callable=agg_week_data,
-        op_kwargs={
-            'week_start': '{{ ds }}',
-            'week_end': '{{ macros.ds_add(ds, 6) }}',
-        }
-    )
-
-    start >> fetch_data
-    
-    fetch_data >> [save_to_minio, save_to_pg]
-
-    save_to_pg >> aggregate
-
-    [save_to_minio, aggregate] >> end
+start >> fetch_data >> save_csv >> end
