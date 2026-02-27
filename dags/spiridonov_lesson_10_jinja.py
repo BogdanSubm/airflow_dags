@@ -171,7 +171,7 @@ with DAG(
     schedule='@daily',
     default_args=DEFAULT_ARGS,
     max_active_runs=1,
-    catchup=False,
+    catchup=True,
     user_defined_macros={
         'month_templates': MonthTemplates
     }
