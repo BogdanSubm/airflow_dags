@@ -247,7 +247,7 @@ def save_agg_to_minio(agg_data, week_start, week_end):
     print('Аггрегация сохранена в minio')
 
 with DAG(
-    dag_id='spiridonov_extra_8_9',
+    dag_id='spiridonov_les_10_jinja',
     tags=['spiridonov'],
     schedule='0 0 * * 1',
     default_args=DEFAULT_ARGS,
