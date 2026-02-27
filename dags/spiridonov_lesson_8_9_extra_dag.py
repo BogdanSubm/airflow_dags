@@ -50,8 +50,7 @@ def save_raw_to_minio(**context):
     week_end = ti.xcom_pull(key='week_end')
 
     minio_hook = S3Hook(
-        aws_conn_id='conn_s3',
-        endpoint_url='http://95.163.241.236:9001'
+        aws_conn_id='conn_s3'
     )
 
     json_data = json.dumps(data, indent=2, default=str)
@@ -123,7 +122,7 @@ def save_raw_to_pg(**context):
 
             conn.commit()
 
-            print('Сырые данные сохранены в PG')
+        print('Сырые данные сохранены в PG')
 
 def agg_week_data(**context):
     week_start = context['ti'].xcom_pull(key='week_start')
@@ -154,9 +153,9 @@ def agg_week_data(**context):
                 SUM(CASE WHEN is_correct THEN 1 ELSE 0 END) as correct_attempts,
                 AVG(CASE WHEN is_correct THEN 1 ELSE 0 END) * 100 as success_rate,
                 COUNT(DISTINCT lti_user_id) AS unique_users,
-                COUNT(*)::float / COUNT(DISTINCT lti_user_id) as attempts_per_user_avg,
+                COUNT(*)::float / NULLIF(COUNT(DISTINCT lti_user_id), 0) as attempts_per_user_avg,
                 MIN(created_at) as min_created_at,
-                max(created_at) as max_created_at
+                MAX(created_at) as max_created_at
             FROM spiridonov_table_8_9_extra_raw
             WHERE week_start = %s and week_end = %s
         """, (week_start, week_end, week_start, week_end))
