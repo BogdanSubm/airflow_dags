@@ -117,7 +117,7 @@ def agg_week_data(**context):
                 COUNT(*)::float / COUNT(DISTINCT lti_user_id) as attempts_per_user_avg,
                 MIN(created_at) as min_created_at,
                 max(created_at) as max_created_at
-            FROM spiridonov_agg_table_8_9_stats
+            FROM spiridonov_table_8_9_extra_raw
             WHERE week_start = %s and week_end = %s
         """, (week_start, week_end, week_start, week_end))
 
