@@ -12,7 +12,6 @@ DEFAULT_ARGS = {
     'start_date': datetime(2024, 11, 13),
 }
 
-
 class WeekTemplates:
     @staticmethod
     def current_week_start(date) -> str: # def current_week_start(date, type)
@@ -122,7 +121,6 @@ def combine_data(week_start: str, week_end: str, **context):
         cursor = conn.cursor()
         cursor.execute(sql_query)
         conn.commit()
-
 
 with DAG(
     dag_id="spiridonov_les_10_weekly",
