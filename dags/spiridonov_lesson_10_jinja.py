@@ -140,7 +140,7 @@ def save_to_pg(data, month_start, month_end, month_period):
         cursor.execute('''
             DELETE FROM spiridonov_les10_monthly_raw
             WHERE month_period = %s
-        ''', (month_period))
+        ''', (month_period, ))
 
         for record in data:
             passback_params = ast.literal_eval(record.get('passback_params') if record.get('passback_params') else '{}')
