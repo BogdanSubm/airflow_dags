@@ -229,7 +229,7 @@ def save_agg_to_minio(agg_data, week_start, week_end, context):
     s3_client.put_object(
         Body=json_data.encode('utf-8'),
         Key=file_name,
-        Bucker='default-storage',
+        Bucket='default-storage',
     )
 
     df = pd.DataFrame([agg_dict])
@@ -237,11 +237,11 @@ def save_agg_to_minio(agg_data, week_start, week_end, context):
     df.to_csv(csv_buffer, index=False)
 
     csv_file_name = f'agg_week_{week_start}_to_{week_end}.csv'
-    minio_hook.load_string(
-        string_data=csv_buffer.getvalue(),
-        key=csv_file_name,
-        bucket_name='default-storage',
-        replace=True
+
+    s3_client.put_object(
+        Body=csv_buffer.getvalue().encode('utf-8'),
+        Key=csv_file_name,
+        Bucket='default-storage',
     )
 
     print('Аггрегация сохранена в minio')
