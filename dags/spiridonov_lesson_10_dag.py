@@ -85,7 +85,7 @@ def upload_data(week_start: str, week_end: str, **context):
         s3_client.put_object(
             Body=file,
             Bucket='default-storage',
-            Key=f"spiridonov_{week_start}_{context['ds']}.csv"
+            Key=f"spiridonov_{week_start}_{week_end}.csv"
         )
 
 
