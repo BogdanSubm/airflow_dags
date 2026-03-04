@@ -67,7 +67,7 @@ DEFAULT_ARGS = {
     'owner': 'spiridonov_a',
     'retries': 2,
     'retry_delay': 600,
-    'start_date': datetime(2024, 11, 13),
+    'start_date': datetime(2024, 11, 29),
 }
 
 class WeekTemplates:
