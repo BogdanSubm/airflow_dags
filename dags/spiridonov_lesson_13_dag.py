@@ -107,9 +107,10 @@ def upload_data(week_start, week_end, **context):
             host=connection.host,
             port=connection.port
     ) as conn:
-        cursor = conn
+        cursor = conn.cursor()
         cursor.execute(sql_query)
         data = cursor.fetchall()
+        cursor.close()
 
         file = BytesIO()
         writer = csv.writer(codecs.getwriter('utf-8')(file))
