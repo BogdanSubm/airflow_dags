@@ -137,6 +137,7 @@ with DAG(
     tags = ['spiridonov', '13'],
     schedule='@daily',
     default_args=DEFAULT_ARGS,
+    catchup=True,
     max_active_runs=1,
     user_defined_macros={
         'current_week_start': WeekTemplates.current_week_start,
