@@ -49,7 +49,7 @@ class CustomBranchOperator(BranchPythonOperator):
     def _check_day(self, **context):
         day = context['execution_date'].day
         if day in self.active_days:
-            return 'combine_data'
+            return 'aggregate_data'
         return 'skip_day'
 
 
@@ -146,7 +146,7 @@ with DAG(
 
     start = EmptyOperator(task_id='start')
     end = EmptyOperator(task_id='end')
-    skip = EmptyOperator(task_id='skip')
+    skip_day  = EmptyOperator(task_id='skip_day')
 
     check_day = CustomBranchOperator(
         task_id='check_day',
@@ -179,6 +179,6 @@ with DAG(
     )
 
     start >> check_day
-    check_day >> [aggregate, skip]
+    check_day >> [aggregate, skip_day ]
     aggregate >> upload >> end
-    skip >> end
+    skip_day  >> end
