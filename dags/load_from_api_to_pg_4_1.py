@@ -77,5 +77,5 @@ with DAG(
         task_id='load_from_api',
         python_callable=load_from_api,
     )
-
+   
     dag_start >> load_from_api >> dag_end
