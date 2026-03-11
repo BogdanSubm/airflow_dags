@@ -24,7 +24,7 @@ with DAG(
     default_args=default_args,
     description='FirstDag',
     schedule_interval='3 8 * * *',  # Запуск каждый день в 08:03
-    catchup=False,
+    catchup=True,
     tags=['example'],
 ) as dag:
 
