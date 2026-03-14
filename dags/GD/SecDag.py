@@ -13,7 +13,7 @@ def extract_data(**context):
     logical_date = context["logical_date"]
     yesterday = logical_date.date() - timedelta(days=1)
     start_date = yesterday.strftime("%Y-%m-%d")
-
+    end_date = logical_date.strftime("%Y-%m-%d")
     # Получаем подключение через Airflow Hook
     connection = BaseHook.get_connection('conn_pg')
 
@@ -31,7 +31,7 @@ def extract_data(**context):
         'client': 'Skillfactory',
         'client_key': 'M2MGWS',
         'start': start_date,
-        'end': start_date
+        'end': end_date
     }
     r = requests.get('https://b2b.itresume.ru/api/statistics', params=payload)
     print(f"URL запроса: {r.url}")
@@ -120,7 +120,7 @@ with DAG(
     default_args=default_args,
     description='DAG для извлечения данных из API',
     schedule_interval='3 8 * * *',
-    catchup=False,
+    catchup=True,
     tags=['gd', 'api', 'extract'],
     max_active_runs=1,  # Ограничение одновременных запусков
 ) as dag:
