@@ -29,7 +29,7 @@ def extract_data(**context):
         days=current_date.weekday() + 7  # Откатываемся на 7 дней от текущего понедельника
     )
     # Конец предыдущей недели (воскресенье)
-    end_of_previous_week = start_of_previous_week + timedelta(days=6)
+    end_of_previous_week = start_of_previous_week + timedelta(days=7)
 
     start_date = start_of_previous_week.strftime("%Y-%m-%d")
     end_date = end_of_previous_week.strftime("%Y-%m-%d")
