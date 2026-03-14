@@ -70,10 +70,10 @@ def extract_data(**context):
     # SQL для создания таблицы
     create_table_sql = """
         CREATE TABLE IF NOT EXISTS Test_gd (
-            lti_user_id VARCHAR(255),
-            oauth_consumer_key VARCHAR(100),
-            lis_result_sourcedid VARCHAR(100),
-            lis_outcome_service_url VARCHAR(100)
+            lti_user_id VARCHAR(1000),
+            oauth_consumer_key VARCHAR(1000),
+            lis_result_sourcedid VARCHAR(1000),
+            lis_outcome_service_url VARCHAR(1000)
         );
     """
 
