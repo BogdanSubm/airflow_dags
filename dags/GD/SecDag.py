@@ -19,7 +19,7 @@ def extract_data(**context):
 
     # Параметры подключения
     conn_params = {
-        'dbname': connection.database,
+        'dbname': 'etl',
         'user': connection.login,
         'password': connection.password,
         'host': connection.host,
