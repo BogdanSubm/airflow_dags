@@ -106,7 +106,7 @@ def extract_data(**context):
                 data_tuples = [tuple(item[col] for col in columns) for item in dataS]
 
                 # SQL-запрос для вставки
-                insert_sql = "INSERT INTO Test_gd (lti_user_id, oauth_consumer_key, lis_result_sourcedid, lis_outcome_service_url,is_correct,attempt_type,created_at) VALUES (%s, %s, %s, %s, %s, %s, %s)"
+                insert_sql = "INSERT INTO Practic1_gd (lti_user_id, oauth_consumer_key, lis_result_sourcedid, lis_outcome_service_url,is_correct,attempt_type,created_at) VALUES (%s, %s, %s, %s, %s, %s, %s)"
 
                 # Вставляем данные партиями
                 execute_batch(cur, insert_sql, data_tuples, page_size=1000)
