@@ -174,7 +174,7 @@ def on_task_failure(context):
 default_args = {
     'owner': 'GD',
     'depends_on_past': False,
-    'start_date': datetime(2026, 2, 25),
+    'start_date': datetime(2026, 1, 25),
     'email_on_failure': False,
     'email_on_retry': False,
     'retries': 2,  # Увеличили количество повторов
