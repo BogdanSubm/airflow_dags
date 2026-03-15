@@ -69,11 +69,40 @@ def check_tables():
                     , correct_attempts INTEGER
                     , unique_users INTEGER
                     , new_users INTEGER
+                    , CONSTRAINT unique_check_3 UNIQUE (period_start, period_end)
                 )    
                 """
             )
 
-            print("=> tables make/exist - OK")
+    print("=> tables make/exist - OK")
+
+
+def delete_named_tables():
+
+    connection = BaseHook.get_connection(conn_id='conn_pg')
+
+    with psycopg2.connect(
+        dbname=connection.schema,
+        user=connection.login,
+        host=connection.host,
+        port=connection.port,
+        password=connection.password,
+        sslmode='disable',
+        connect_timeout=600,
+        keepalives_idle=600,
+        tcp_user_timeout=600
+    ) as conn:
+
+        with conn.cursor() as cur:
+
+            print("=> connection to DB - OK")
+
+            cur.execute(
+                query="""
+                DROP TABLE IF EXISTS rocknmove_raw_data, rocknmove_users, rocknmove_data_agg1
+                """
+            )
+    print("=> tables delete - OK")
 
 
 def load_from_api(API_URL, **context):
@@ -211,15 +240,15 @@ def aggregate_data_1(**context):
                     %s AS period_start
                     , (%s::date - INTERVAL '1 DAY')::date AS period_end
                     , count(1) AS attempts_total
-                    , count(CASE WHEN is_correct=1 THEN 1 ELSE NULL END) AS correct_attempts
-                    , count(DISTINCT lti_user_id) AS unique_users
+                    , count(CASE WHEN d.is_correct=1 THEN 1 ELSE NULL END) AS correct_attempts
+                    , count(DISTINCT d.lti_user_id) AS unique_users
                     , count(DISTINCT CASE WHEN u.id IS NULL THEN d.lti_user_id ELSE NULL END) AS new_users
                 FROM rocknmove_raw_data d
-                LEFT JOIN rocknmove_users u USING(lti_user_id)
+                LEFT JOIN (SELECT DISTINCT lti_user_id FROM rocknmove_raw_data WHERE created_at < %s) u ON d.lti_user_id=u.lti_user_id
                 WHERE created_at >= %s
                     AND created_at < %s
-                """,
-                vars=(start, end, start, end)
+                    """,
+                vars=(start, end, start, start, end)
             )
 
             agg_to_insert = cur.fetchall()
@@ -230,6 +259,7 @@ def aggregate_data_1(**context):
                 INSERT INTO rocknmove_data_agg1
                     (period_start, period_end, attempts_total, correct_attempts, unique_users, new_users) 
                 VALUES %s
+                ON CONFLICT ON CONSTRAINT unique_check_3 DO NOTHING
                 """,
                 argslist=agg_to_insert
             )
