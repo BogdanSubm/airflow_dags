@@ -278,7 +278,7 @@ def upload_agg_data_s3(**context):
         quoting=csv.QUOTE_MINIMAL
     )
 
-    writer.writerow(['period_start', 'period_end', 'attempts_total',
+    writer.writerow(['id', 'period_start', 'period_end', 'attempts_total',
                     'correct_attempts', 'unique_users', 'new_users'])
     writer.writerows(data_to_upload)
     file.seek(0)
@@ -341,7 +341,7 @@ def upload_raw_data_s3(**context):
         quoting=csv.QUOTE_MINIMAL
     )
 
-    writer.writerow(['lti_user_id', 'oauth_consumer_key', 'lis_result_sourcedid',
+    writer.writerow(['id', 'lti_user_id', 'oauth_consumer_key', 'lis_result_sourcedid',
                     'lis_outcome_service_url', 'is_correct', 'attempt_type', 'created_at'])
     writer.writerows(data_to_upload)
     file.seek(0)
