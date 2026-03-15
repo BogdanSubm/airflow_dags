@@ -242,7 +242,7 @@ def aggregate_data_1(**context):
                     , count(1) AS attempts_total
                     , count(CASE WHEN d.is_correct=1 THEN 1 ELSE NULL END) AS correct_attempts
                     , count(DISTINCT d.lti_user_id) AS unique_users
-                    , count(DISTINCT CASE WHEN u.id IS NULL THEN d.lti_user_id ELSE NULL END) AS new_users
+                    , count(DISTINCT CASE WHEN u.lti_user_id IS NULL THEN d.lti_user_id ELSE NULL END) AS new_users
                 FROM rocknmove_raw_data d
                 LEFT JOIN (SELECT DISTINCT lti_user_id FROM rocknmove_raw_data WHERE created_at < %s) u ON d.lti_user_id=u.lti_user_id
                 WHERE created_at >= %s
