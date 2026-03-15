@@ -292,7 +292,7 @@ def upload_data(**context):
 
     s3_client.put_object(
         Body=file,
-        Bucket='gd',
+        Bucket='gdi',
         Key=f"gd_{context['ds']}.csv"
     )
 
