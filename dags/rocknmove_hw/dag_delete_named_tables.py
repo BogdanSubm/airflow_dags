@@ -11,13 +11,15 @@ DEFAULT_ARGS = {
     'owner': 'rocknmove',
     'retries': 2,
     'retries_delay': 600,
-    'start_date': datetime(2026, 2, 16)
+    'start_date': datetime(2026, 2, 16),
+    'tags': ['rocknmove']
 }
 
 
 with DAG(dag_id='rocknmove_delete_named_tables',
          schedule='@once',
-         start_date=datetime.today()) as dag:
+         start_date=datetime.today(),
+         default_args=DEFAULT_ARGS) as dag:
 
     dag_start = EmptyOperator(task_id='dag_start')
     dag_end = EmptyOperator(task_id='dag_end')
@@ -26,3 +28,5 @@ with DAG(dag_id='rocknmove_delete_named_tables',
         task_id='delete_named_tables',
         python_callable=myutils.delete_named_tables
     )
+
+    dag_start >> delete_named_tables >> dag_end
