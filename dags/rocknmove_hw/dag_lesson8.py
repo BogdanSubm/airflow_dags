@@ -50,9 +50,15 @@ with DAG(
         python_callable=myutils.add_users
     )
 
-    upload_data_3s = PythonOperator(
-        task_id='upload_data_3s',
-        python_callable=myutils.upload_data_s3
+    upload_agg_data_s3 = PythonOperator(
+        task_id='upload_agg_data_s3',
+        python_callable=myutils.upload_agg_data_s3
     )
 
-    dag_start >> check_tables >> load_from_api >> aggregate_data_1 >> add_users >> upload_data_3s >> dag_end
+    upload_raw_data_s3 = PythonOperator(
+        task_id='upload_raw_data_s3',
+        python_callable=myutils.upload_raw_data_s3
+    )
+
+    dag_start >> check_tables >> load_from_api >> aggregate_data_1 >> add_users >> upload_agg_data_s3 >> dag_end
+    load_from_api >> upload_raw_data_s3 >> dag_end

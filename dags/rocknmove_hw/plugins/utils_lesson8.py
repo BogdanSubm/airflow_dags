@@ -37,12 +37,12 @@ def check_tables():
                 CREATE TABLE IF NOT EXISTS rocknmove_raw_data (
                     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY
                     , lti_user_id TEXT NOT NULL
-                    , is_correct INT CHECK (is_correct in (0, 1) OR is_correct is NULL)
-                    , attempt_type TEXT CHECK (attempt_type in ('run', 'submit'))
-                    , created_at TIMESTAMP
                     , oauth_consumer_key TEXT
                     , lis_result_sourcedid TEXT
                     , lis_outcome_service_url TEXT
+                    , is_correct INT CHECK (is_correct in (0, 1) OR is_correct is NULL)
+                    , attempt_type TEXT CHECK (attempt_type in ('run', 'submit'))
+                    , created_at TIMESTAMP
                     , CONSTRAINT unique_check UNIQUE (lti_user_id, created_at)
                 )
                 """
@@ -235,7 +235,7 @@ def aggregate_data_1(**context):
             )
 
 
-def upload_data_s3(**context):
+def upload_agg_data_s3(**context):
 
     connection_pg = BaseHook.get_connection(conn_id='pg_conn')
     connection_s3 = BaseHook.get_connection(conn_id='s3_conn')
@@ -295,4 +295,67 @@ def upload_data_s3(**context):
         Body=file,
         Bucket='default-storage',
         Key=f"rocknmove/lesson-8/agg_{context['ds']}.csv"
+    )
+
+
+def upload_raw_data_s3(**context):
+
+    connection_pg = BaseHook.get_connection(conn_id='pg_conn')
+    connection_s3 = BaseHook.get_connection(conn_id='s3_conn')
+
+    start = context['data_interval_start'].to_date_string()
+    end = context['data_interval_end'].to_date_string()
+
+    query = """
+    SELECT *
+    FROM rocknmove_raw_data
+    WHERE period_start >= %s
+        AND period_end < %s
+    """
+
+    with psycopg2.connect(
+        dbname=connection_pg.schema,
+        user=connection_pg.login,
+        host=connection_pg.host,
+        port=connection_pg.port,
+        password=connection_pg.password,
+        sslmode='disable',
+        connect_timeout=600,
+        keepalives_idle=600,
+        tcp_user_timeout=600
+    ) as conn:
+
+        with conn.cursor() as cur:
+
+            cur.execute(query=query, vars=(start, end))
+            data_to_upload = cur.fetchall()
+
+    file = BytesIO()
+    writer_wrapper = codecs.getwriter(encoding='utf-8')
+
+    writer = csv.writer(
+        writer_wrapper(file),
+        delimiter='\t',
+        lineterminator='\n',
+        quotechar='"',
+        quoting=csv.QUOTE_MINIMAL
+    )
+
+    writer.writerow(['lti_user_id', 'oauth_consumer_key', 'lis_result_sourcedid',
+                    'lis_outcome_service_url', 'is_correct', 'attempt_type', 'created_at'])
+    writer.writerows(data_to_upload)
+    file.seek(0)
+
+    s3_client = boto3.client(
+        's3',
+        endpoint_url=connection_s3.host,
+        aws_access_key_id=connection_s3.login,
+        aws_secret_access_key=connection_s3.password,
+        config=Config(signature_version="s3v4")
+    )
+
+    s3_client.put_object(
+        Body=file,
+        Bucket='default-storage',
+        Key=f"rocknmove/lesson-8/raw_{context['ds']}.csv"
     )
