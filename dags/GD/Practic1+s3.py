@@ -242,7 +242,7 @@ default_args = {
 }
 
 with DAG(
-    dag_id='GD_Practic1',
+    dag_id='GD_Practic1+S3',
     default_args=default_args,
     description='DAG для извлечения данных из API и агрегации',
     schedule_interval='0 7 * * 1',# каждый понедельник
