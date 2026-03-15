@@ -220,7 +220,7 @@ def agg_Table(**context):
 
                 # Шаг 4: Запись агрегированных данных в таблицу
                 insert_sql = """
-                INSERT INTO Practic1_gd_agg (attempt_type, cnt_user)
+                INSERT INTO Practic2_gd_agg (attempt_type, cnt_user)
                 VALUES (%s, %s);
                 """
 
@@ -228,7 +228,7 @@ def agg_Table(**context):
                     cur.executemany(insert_sql, aggregated_data)
                     print(f"Успешно записано {len(aggregated_data)} записей в таблицу Practic1_gd_agg")
                 else:
-                    print("Нет данных для записи в таблицу Practic1_gd_agg")
+                    print("Нет данных для записи в таблицу Practic2_gd_agg")
 
             conn.commit()
             print("Транзакция успешно завершена")
