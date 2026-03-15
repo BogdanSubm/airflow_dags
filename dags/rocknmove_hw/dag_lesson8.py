@@ -12,7 +12,6 @@ DEFAULT_ARGS = {
     'retries': 2,
     'retries_delay': 600,
     'start_date': datetime(2026, 2, 16),
-    'tags': ['rocknmove']
 }
 
 API_URL = 'https://b2b.itresume.ru/api/statistics'
@@ -23,6 +22,7 @@ with DAG(
     default_args=DEFAULT_ARGS,
     max_active_runs=1,
     max_active_tasks=1,
+    tags=['rocknmove']
 ) as dag:
 
     dag_start = EmptyOperator(task_id='dag_start')
