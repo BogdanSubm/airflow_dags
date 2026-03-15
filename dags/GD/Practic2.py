@@ -333,7 +333,7 @@ with DAG(
         python_callable=extract_data,
         op_kwargs={
         'start_date':'{{currentMStart(ds)}}',
-        'end_date':'{{currentMEnd(ds)}}',}
+        'end_date':'{{currentMEnd(ds)}}',},
         execution_timeout=timedelta(hours=1),  # Таймаут выполнения
     )
     load_to_s3 = PythonOperator(
