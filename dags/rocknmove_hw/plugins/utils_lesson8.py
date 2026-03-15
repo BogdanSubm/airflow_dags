@@ -309,8 +309,8 @@ def upload_raw_data_s3(**context):
     query = """
     SELECT *
     FROM rocknmove_raw_data
-    WHERE period_start >= %s
-        AND period_end < %s
+    WHERE created_at >= %s
+        AND created_at < %s
     """
 
     with psycopg2.connect(
