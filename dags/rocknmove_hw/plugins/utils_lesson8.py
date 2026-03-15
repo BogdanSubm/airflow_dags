@@ -14,7 +14,7 @@ from airflow.hooks.base import BaseHook
 
 def check_tables():
 
-    connection = BaseHook.get_connection(conn_id='pg_conn')
+    connection = BaseHook.get_connection(conn_id='conn_pg')
 
     with psycopg2.connect(
         dbname=connection.schema,
@@ -90,7 +90,7 @@ def load_from_api(API_URL, **context):
 
     print("=> got data by API - OK")
 
-    connection = BaseHook.get_connection(conn_id='pg_conn')
+    connection = BaseHook.get_connection(conn_id='conn_pg')
 
     with psycopg2.connect(
         dbname=connection.schema,
@@ -140,7 +140,7 @@ def load_from_api(API_URL, **context):
 
 def add_users(**context):
 
-    connection = BaseHook.get_connection('pg_conn')
+    connection = BaseHook.get_connection('conn_pg')
 
     with psycopg2.connect(
         dbname=connection.schema,
@@ -186,7 +186,7 @@ def add_users(**context):
 
 def aggregate_data_1(**context):
 
-    connection = BaseHook.get_connection('pg_conn')
+    connection = BaseHook.get_connection('conn_pg')
 
     with psycopg2.connect(
         dbname=connection.schema,
@@ -237,8 +237,8 @@ def aggregate_data_1(**context):
 
 def upload_agg_data_s3(**context):
 
-    connection_pg = BaseHook.get_connection(conn_id='pg_conn')
-    connection_s3 = BaseHook.get_connection(conn_id='s3_conn')
+    connection_pg = BaseHook.get_connection(conn_id='conn_pg')
+    connection_s3 = BaseHook.get_connection(conn_id='conn_s3')
 
     start = context['data_interval_start'].to_date_string()
     end = context['data_interval_end'].to_date_string()
@@ -300,8 +300,8 @@ def upload_agg_data_s3(**context):
 
 def upload_raw_data_s3(**context):
 
-    connection_pg = BaseHook.get_connection(conn_id='pg_conn')
-    connection_s3 = BaseHook.get_connection(conn_id='s3_conn')
+    connection_pg = BaseHook.get_connection(conn_id='conn_pg')
+    connection_s3 = BaseHook.get_connection(conn_id='conn_s3')
 
     start = context['data_interval_start'].to_date_string()
     end = context['data_interval_end'].to_date_string()
