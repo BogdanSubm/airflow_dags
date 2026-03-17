@@ -1,13 +1,12 @@
 import ast
+from io import BytesIO
+import csv
+import codecs
 import requests
 import psycopg2
 from psycopg2.extras import execute_values
-
-from io import BytesIO
-import csv
 import boto3
 from botocore.client import Config
-import codecs
 
 from airflow.hooks.base import BaseHook
 
@@ -43,6 +42,7 @@ def check_tables():
                     , is_correct INT CHECK (is_correct in (0, 1) OR is_correct is NULL)
                     , attempt_type TEXT CHECK (attempt_type in ('run', 'submit'))
                     , created_at TIMESTAMP
+                    , date_tag TEXT
                     , CONSTRAINT unique_check UNIQUE (lti_user_id, created_at)
                 )
                 """
@@ -69,6 +69,7 @@ def check_tables():
                     , correct_attempts INTEGER
                     , unique_users INTEGER
                     , new_users INTEGER
+                    , date_tag TEXT
                     , CONSTRAINT unique_check_3 UNIQUE (period_start, period_end)
                 )    
                 """
@@ -105,13 +106,13 @@ def delete_named_tables():
     print("=> tables delete - OK")
 
 
-def load_from_api(API_URL, **context):
+def load_from_api(API_URL, data_interval_start, data_interval_end, date_tag):
 
     payload = {
         'client': 'Skillfactory',
         'client_key': 'M2MGWS',
-        'start': context['data_interval_start'].to_date_string(),
-        'end': context['data_interval_end'].to_date_string()
+        'start': data_interval_start.to_date_string(),
+        'end': data_interval_end.to_date_string()
     }
 
     response = requests.get(url=API_URL, params=payload)
@@ -150,6 +151,7 @@ def load_from_api(API_URL, **context):
                 row.append(el.get('is_correct'))
                 row.append(el.get('attempt_type'))
                 row.append(el.get('created_at'))
+                row.append(date_tag)
 
                 rows_to_insert.append(row)
 
@@ -157,7 +159,7 @@ def load_from_api(API_URL, **context):
                 cur=cur,
                 sql="""
                     INSERT INTO rocknmove_raw_data 
-                    (lti_user_id, oauth_consumer_key, lis_result_sourcedid, lis_outcome_service_url, is_correct, attempt_type, created_at) 
+                    (lti_user_id, oauth_consumer_key, lis_result_sourcedid, lis_outcome_service_url, is_correct, attempt_type, created_at, date_tag) 
                     VALUES %s
                     ON CONFLICT ON CONSTRAINT unique_check DO NOTHING
                     """,
@@ -167,7 +169,7 @@ def load_from_api(API_URL, **context):
             print("=> data insert to DB - OK")
 
 
-def add_users(**context):
+def add_users(data_interval_start, data_interval_end):
 
     connection = BaseHook.get_connection('conn_pg')
 
@@ -196,8 +198,8 @@ def add_users(**context):
                     AND created_at < %s
                 GROUP BY lti_user_id
                 """,
-                vars=(context['data_interval_start'].to_date_string(),
-                      context['data_interval_end'].to_date_string())
+                vars=(data_interval_start.to_date_string(),
+                      data_interval_end.to_date_string())
             )
             users_to_insert = cur.fetchall()
 
@@ -213,7 +215,7 @@ def add_users(**context):
             )
 
 
-def aggregate_data_1(**context):
+def aggregate_data_1(data_interval_start, data_interval_end):
 
     connection = BaseHook.get_connection('conn_pg')
 
@@ -231,8 +233,8 @@ def aggregate_data_1(**context):
 
         with conn.cursor() as cur:
 
-            start = context['data_interval_start'].to_date_string()
-            end = context['data_interval_end'].to_date_string()
+            start = data_interval_start.to_date_string()
+            end = data_interval_end.to_date_string()
 
             cur.execute(
                 query="""
@@ -243,11 +245,14 @@ def aggregate_data_1(**context):
                     , count(CASE WHEN d.is_correct=1 THEN 1 ELSE NULL END) AS correct_attempts
                     , count(DISTINCT d.lti_user_id) AS unique_users
                     , count(DISTINCT CASE WHEN u.lti_user_id IS NULL THEN d.lti_user_id ELSE NULL END) AS new_users
+                    , date_tag
                 FROM rocknmove_raw_data d
                 LEFT JOIN (SELECT DISTINCT lti_user_id FROM rocknmove_raw_data WHERE created_at < %s) u ON d.lti_user_id=u.lti_user_id
                 WHERE created_at >= %s
                     AND created_at < %s
+                GROUP BY date_tag
                     """,
+
                 vars=(start, end, start, start, end)
             )
 
@@ -257,7 +262,7 @@ def aggregate_data_1(**context):
                 cur=cur,
                 sql="""
                 INSERT INTO rocknmove_data_agg1
-                    (period_start, period_end, attempts_total, correct_attempts, unique_users, new_users) 
+                    (period_start, period_end, attempts_total, correct_attempts, unique_users, new_users, date_tag) 
                 VALUES %s
                 ON CONFLICT ON CONSTRAINT unique_check_3 DO NOTHING
                 """,
@@ -265,13 +270,13 @@ def aggregate_data_1(**context):
             )
 
 
-def upload_agg_data_s3(**context):
+def upload_agg_data_s3(ds, data_interval_start, data_interval_end):
 
     connection_pg = BaseHook.get_connection(conn_id='conn_pg')
     connection_s3 = BaseHook.get_connection(conn_id='conn_s3')
 
-    start = context['data_interval_start'].to_date_string()
-    end = context['data_interval_end'].to_date_string()
+    start = data_interval_start.to_date_string()
+    end = data_interval_end.to_date_string()
 
     query = """
     SELECT *
@@ -309,7 +314,7 @@ def upload_agg_data_s3(**context):
     )
 
     writer.writerow(['id', 'period_start', 'period_end', 'attempts_total',
-                    'correct_attempts', 'unique_users', 'new_users'])
+                    'correct_attempts', 'unique_users', 'new_users', 'date_tag'])
     writer.writerows(data_to_upload)
     file.seek(0)
 
@@ -324,17 +329,17 @@ def upload_agg_data_s3(**context):
     s3_client.put_object(
         Body=file,
         Bucket='default-storage',
-        Key=f"rocknmove/lesson-8/agg_{context['ds']}.csv"
+        Key=f"rocknmove/lesson-8/agg_{ds}.csv"
     )
 
 
-def upload_raw_data_s3(**context):
+def upload_raw_data_s3(ds, data_interval_start, data_interval_end):
 
     connection_pg = BaseHook.get_connection(conn_id='conn_pg')
     connection_s3 = BaseHook.get_connection(conn_id='conn_s3')
 
-    start = context['data_interval_start'].to_date_string()
-    end = context['data_interval_end'].to_date_string()
+    start = data_interval_start.to_date_string()
+    end = data_interval_end.to_date_string()
 
     query = """
     SELECT *
@@ -372,7 +377,7 @@ def upload_raw_data_s3(**context):
     )
 
     writer.writerow(['id', 'lti_user_id', 'oauth_consumer_key', 'lis_result_sourcedid',
-                    'lis_outcome_service_url', 'is_correct', 'attempt_type', 'created_at'])
+                    'lis_outcome_service_url', 'is_correct', 'attempt_type', 'created_at', 'date_tag'])
     writer.writerows(data_to_upload)
     file.seek(0)
 
@@ -387,5 +392,5 @@ def upload_raw_data_s3(**context):
     s3_client.put_object(
         Body=file,
         Bucket='default-storage',
-        Key=f"rocknmove/lesson-8/raw_{context['ds']}.csv"
+        Key=f"rocknmove/lesson-8/raw_{ds}.csv"
     )
