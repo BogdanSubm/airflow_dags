@@ -16,14 +16,14 @@ import boto3 as s3
 from botocore.client import Config
 import codecs
 
-def load_data_api(**context):
-
-    DEFAULT_ARG = {
+DEFAULT_ARGS = {
     "owner": "mt",
     "retries": 2,
     "retry_delay": 600,
     "start_date": datetime(2026, 3, 10),
 }
+
+def load_data_api(**context):
 
     params = {'client': 'Skillfactory',
     'client_key': 'M2MGWS',
@@ -154,9 +154,9 @@ def upload_from_s3(**context):
         Key=f"mt_agg_{context['ds']}.csv"
     )
 
-    def upload_raw_data(**context):
+def upload_raw_data(**context):
         
-        sql_query = f"""
+    sql_query = f"""
         SELECT * FROM mt_table
         WHERE created_at >= {context['ds']}::timestamp
         AND created_at < {context['ds']}'::timestamp + INTERVAL '7 days';
@@ -225,18 +225,18 @@ with DAG(
     dag_end = EmptyOperator(task_id='dag_end')
 
     load_from_api = PythonOperator(
-        task_id='load_from_api',
-        python_callable=load_from_api,
+        task_id='load_data_api',
+        python_callable=load_data_api,
     )
 
-    combine_data = PythonOperator(
-        task_id='combine_data',
-        python_callable=combine_data,
+    agg_data = PythonOperator(
+        task_id='agg_data',
+        python_callable=agg_data,
     )
 
-    upload_agg_data = PythonOperator(
-        task_id='upload_agg_data',
-        python_callable=upload_agg_data,
+    upload_from_s3 = PythonOperator(
+        task_id='upload_from_s3',
+        python_callable=upload_from_s3,
     )    
 
     upload_raw_data = PythonOperator(
@@ -246,4 +246,4 @@ with DAG(
 
     dag_start >> load_from_api >> upload_raw_data >> dag_end
 
-    dag_start >> load_from_api >> combine_data >> upload_agg_data >> dag_end
+    dag_start >> load_from_api >> agg_data >> upload_from_s3 >> dag_end
