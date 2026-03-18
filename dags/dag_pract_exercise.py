@@ -16,14 +16,14 @@ import boto3 as s3
 from botocore.client import Config
 import codecs
 
-def load_data_api(**context):
-
-    DEFAULT_ARG = {
+DEFAULT_ARGS = {
     "owner": "mt",
     "retries": 2,
     "retry_delay": 600,
     "start_date": datetime(2026, 3, 10),
 }
+
+def load_data_api(**context):
 
     params = {'client': 'Skillfactory',
     'client_key': 'M2MGWS',
