@@ -1,13 +1,15 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from airflow import DAG
 from airflow.operators.empty import EmptyOperator
 from airflow.operators.python import PythonOperator
 from rocknmove_hw.plugins.operators import PgOperator
+from rocknmove_hw.plugins.sensors import CheckTablesSensor
 
 import rocknmove_hw.plugins.utils_lesson as myutils
 import rocknmove_hw.plugins.templates as mytemplates
 from rocknmove_hw.plugins import sqls
+from airflow.sensors.external_task import ExternalTaskSensor
 
 
 DEFAULT_ARGS = {
@@ -64,16 +66,33 @@ with DAG(
                               )
     )
 
-    upload_agg_data_s3 = PythonOperator(
-        task_id='upload_agg_data_s3',
-        python_callable=myutils.upload_agg_data_s3
+    check_tables = CheckTablesSensor(
+        task_id='check_tables',
+        mode='reschedule',
+        poke_interval=300,
+        conn_id='conn_pg',
+        tables_to_check=('rocknmove_raw_data', 'rocknmove_users')
     )
 
-    upload_raw_data_s3 = PythonOperator(
-        task_id='upload_raw_data_s3',
-        python_callable=myutils.upload_raw_data_s3
+    check_bash_opp = ExternalTaskSensor(
+        task_id='check_bash_opp',
+        mode='reschedule',
+        poke_interval=300,
+        external_dag_id='rocknmove_lib_show',
+        external_task_id='lib_test',
+        execution_delta=timedelta(hours=3)
     )
 
-    # dag_start >> load_from_api >> aggregate_data_1 >> add_users >> dag_end
-    dag_start >> load_from_api >> aggregate_data_1 >> add_users >> upload_agg_data_s3 >> dag_end
-    load_from_api >> upload_raw_data_s3 >> dag_end
+    # upload_agg_data_s3 = PythonOperator(
+    #     task_id='upload_agg_data_s3',
+    #     python_callable=myutils.upload_agg_data_s3
+    # )
+
+    # upload_raw_data_s3 = PythonOperator(
+    #     task_id='upload_raw_data_s3',
+    #     python_callable=myutils.upload_raw_data_s3
+    # )
+
+    # dag_start >> load_from_api >> add_users >> check_tables >> aggregate_data_1 >> dag_end
+    dag_start >> load_from_api >> add_users >> check_tables >> aggregate_data_1 >> upload_agg_data_s3 >> dag_end
+    check_tables >> upload_raw_data_s3 >> dag_end

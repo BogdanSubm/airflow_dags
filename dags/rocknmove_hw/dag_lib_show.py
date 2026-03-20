@@ -11,7 +11,7 @@ DEFAULT_ARGS = {
 }
 
 with DAG(dag_id='rocknmove_lib_show',
-         schedule='@once',
+         schedule='03**1',
          start_date=datetime.today(),
          default_args=DEFAULT_ARGS,
          tags=['rocknmove']) as dag:
