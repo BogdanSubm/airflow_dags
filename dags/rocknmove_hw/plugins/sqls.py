@@ -70,3 +70,8 @@ sql_add_users = """
         GROUP BY lti_user_id
     ON CONFLICT ON CONSTRAINT unique_check_2 DO NOTHING
 """
+sql_check_table = """
+    SELECT 1
+    FROM {}
+    LIMIT 1
+"""
