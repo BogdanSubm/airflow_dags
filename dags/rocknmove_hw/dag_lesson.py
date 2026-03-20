@@ -64,16 +64,16 @@ with DAG(
                               )
     )
 
-    # upload_agg_data_s3 = PythonOperator(
-    #     task_id='upload_agg_data_s3',
-    #     python_callable=myutils.upload_agg_data_s3
-    # )
+    upload_agg_data_s3 = PythonOperator(
+        task_id='upload_agg_data_s3',
+        python_callable=myutils.upload_agg_data_s3
+    )
 
-    # upload_raw_data_s3 = PythonOperator(
-    #     task_id='upload_raw_data_s3',
-    #     python_callable=myutils.upload_raw_data_s3
-    # )
+    upload_raw_data_s3 = PythonOperator(
+        task_id='upload_raw_data_s3',
+        python_callable=myutils.upload_raw_data_s3
+    )
 
-    dag_start >> load_from_api >> aggregate_data_1 >> add_users >> dag_end
-    # dag_start >> check_tables >> load_from_api >> aggregate_data_1 >> add_users >> upload_agg_data_s3 >> dag_end
-    # load_from_api >> upload_raw_data_s3 >> dag_end
+    # dag_start >> load_from_api >> aggregate_data_1 >> add_users >> dag_end
+    dag_start >> load_from_api >> aggregate_data_1 >> add_users >> upload_agg_data_s3 >> dag_end
+    load_from_api >> upload_raw_data_s3 >> dag_end
