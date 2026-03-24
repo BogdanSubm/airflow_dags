@@ -63,10 +63,10 @@ def load_from_api(API_URL, data_interval_start, data_interval_end, date_tag):
             execute_values(
                 cur=cur,
                 sql="""
-                    INSERT INTO rocknmove_raw_data 
+                    INSERT INTO roc_raw_data 
                     (lti_user_id, oauth_consumer_key, lis_result_sourcedid, lis_outcome_service_url, is_correct, attempt_type, created_at, date_tag) 
                     VALUES %s
-                    ON CONFLICT ON CONSTRAINT unique_check DO NOTHING
+                    ON CONFLICT (lti_user_id, created_at) DO NOTHING
                     """,
                 argslist=rows_to_insert
             )
@@ -84,7 +84,7 @@ def upload_agg_data_s3(ds, data_interval_start, data_interval_end):
 
     query = """
     SELECT *
-    FROM rocknmove_data_agg1
+    FROM roc_data_agg1
     WHERE period_start = %s
         AND period_end = (%s::date - INTERVAL '1 DAY')::date
     """
@@ -133,7 +133,7 @@ def upload_agg_data_s3(ds, data_interval_start, data_interval_end):
     s3_client.put_object(
         Body=file,
         Bucket='default-storage',
-        Key=f"rocknmove/lesson-8/agg_{ds}.csv"
+        Key=f"roc/lesson-8/agg_{ds}.csv"
     )
 
 
@@ -147,7 +147,7 @@ def upload_raw_data_s3(ds, data_interval_start, data_interval_end):
 
     query = """
     SELECT *
-    FROM rocknmove_raw_data
+    FROM roc_raw_data
     WHERE created_at >= %s
         AND created_at < %s
     """
@@ -196,5 +196,5 @@ def upload_raw_data_s3(ds, data_interval_start, data_interval_end):
     s3_client.put_object(
         Body=file,
         Bucket='default-storage',
-        Key=f"rocknmove/lesson-8/raw_{ds}.csv"
+        Key=f"roc/lesson-8/raw_{ds}.csv"
     )

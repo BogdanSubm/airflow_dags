@@ -1,7 +1,7 @@
 from airflow.sensors.base import BaseSensorOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from psycopg2 import sql
-from rocknmove_hw.plugins import sqls
+from roc_hw.plugins import sqls
 
 
 class CheckTablesSensor(BaseSensorOperator):
