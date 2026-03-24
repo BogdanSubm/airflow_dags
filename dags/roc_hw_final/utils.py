@@ -6,7 +6,7 @@ import boto3
 from botocore.client import Config
 
 
-def put_to_s3(context, s3_conn_id, headers, body):
+def put_to_s3(context, s3_conn_id, headers, body, name):
     file = BytesIO()
     writer_wrapper = codecs.getwriter(encoding='utf-8')
 
@@ -35,5 +35,5 @@ def put_to_s3(context, s3_conn_id, headers, body):
     s3_client.put_object(
         Body=file,
         Bucket='default-storage',
-        Key=f"roc/lesson-8/raw_{context['ds']}.csv"
+        Key=f"roc/lesson-fin/agg_{name}_{context['ds']}.csv"
     )

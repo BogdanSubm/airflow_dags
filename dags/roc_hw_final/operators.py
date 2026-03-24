@@ -63,5 +63,6 @@ class MySqlOperator(BaseOperator):
                         context=context,
                         s3_conn_id=self.s3_conn_id,
                         headers=headers,
-                        body=body
+                        body=body,
+                        name=self.table_name
                     )
