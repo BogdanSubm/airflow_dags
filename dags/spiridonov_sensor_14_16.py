@@ -12,7 +12,6 @@ class MultiSqlSensor(BaseSensorOperator):
     def poke(self, context):
         connection = BaseHook.get_connection('conn_pg')
 
-
         with pg.connect(
             dbname='etl',
             sslmode='disable',
@@ -27,7 +26,7 @@ class MultiSqlSensor(BaseSensorOperator):
             cursor = conn.cursor()
 
             for i, sql in enumerate(self.sql_list):
-                cursor.execute(self.sql)
+                cursor.execute(sql)
                 result = cursor.fetchone()
 
                 if not result or result[0] == 0:

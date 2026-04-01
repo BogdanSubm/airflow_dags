@@ -147,12 +147,12 @@ with DAG(
             """
             SELECT COUNT(1)
             from spiridonov_admin_table_8
-            where created_at >= '{context["ds"]}'::timestamp
+            where created_at >= '{{ ds }}'::timestamp
             and created_at < '{{ ds }}'::timestamp + INTERVAL '1 days'
             """,
             """
             select count(1)
-            from spiridonov_api_table
+            from spiridonov_api_data
             where load_date = '{{ ds }}'
             """
         ],
