@@ -31,11 +31,20 @@ def fetch_data(**context):
     try:
         response = requests.get(api_url, params=payload, timeout=600)
         response.raise_for_status()
+
+        context['task_instance'].log.info(f"API Response Status: {response.status_code}")
+        context['task_instance'].log.info(f"API Response Headers: {response.headers}")
+
         data = response.json()
 
+        context['task_instance'].log.info(f"API Response Data Type: {type(data)}")
+        context['task_instance'].log.info(
+            f"API Response Data Length: {len(data) if isinstance(data, list) else 'not a list'}")
+
         if not data:
-            context['task_instance'].log.info('No data')
-            return
+            context['task_instance'].log.error(f'No data received from API for period {date_from} to {date_to}')
+            context['task_instance'].log.error(f'Full response: {response.text[:500]}')  # Первые 500 символов
+            raise ValueError(f"No data available for {date_from}")
 
         connection = BaseHook.get_connection('conn_pg')
 
