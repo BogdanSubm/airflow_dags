@@ -113,10 +113,6 @@ def process_api_data(**context):
             FROM spiridonov_api_data
             WHERE load_date = '{context['ds']}'
             GROUP BY lti_user_id, attempt_type
-            ON CONFLICT (date, lti_user_id, attempt_type) 
-            DO UPDATE SET 
-                attempt_count = EXCLUDED.attempt_count,
-                attempt_failed_count = EXCLUDED.attempt_failed_count
         """
 
         cursor.execute(sql_query)
