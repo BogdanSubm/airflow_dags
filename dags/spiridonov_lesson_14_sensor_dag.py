@@ -106,7 +106,7 @@ def combine_data(**context):
         keepalives_idle=600,
         tcp_user_timeout=600,
     ) as conn:
-        cursor = conn
+        cursor = conn.cursor()
         cursor.execute(sql_query)
         conn.commit()
 
