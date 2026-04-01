@@ -7,7 +7,7 @@ from airflow.hooks.base import BaseHook
 import boto3
 from botocore.client import Config
 
-from sensor_14_16_extra import MultiExternalTaskSensor
+from spiridonov_sensor_14_16_extra import MultiExternalTaskSensor
 
 DEFAULT_ARGS = {
     'owner': 'spiridonov_a',
@@ -105,7 +105,7 @@ def combine_data(**context):
         conn.commit()
 
 with DAG(
-    dag_id='spiridonov_les_9_14_16_dag',
+    dag_id='spiridonov_les_9_14_16_extra_dag',
     tags=['spiridonov'],
     schedule='@daily',
     default_args=DEFAULT_ARGS,
