@@ -29,7 +29,7 @@ def fetch_data(**context):
     api_url = 'https://b2b.itresume.ru/api/statistics'
 
     try:
-        response = requests.get(api_url, params=payload, timeout=30)
+        response = requests.get(api_url, params=payload, timeout=600)
         response.raise_for_status()
         data = response.json()
 
@@ -47,6 +47,8 @@ def fetch_data(**context):
             host=connection.host,
             port=connection.port,
             connect_timeout=600,
+            keepalives_idle=600,
+            tcp_user_timeout=600
         ) as conn:
             cursor = conn.cursor()
 
@@ -76,11 +78,14 @@ def fetch_data(**context):
                 ))
                 insert_count += 1
             conn.commit()
+    except requests.exceptions.Timeout as e:
+        context['task_instance'].log.error(f'API timeout error: {e}')
+        raise
     except requests.exceptions.RequestException as e:
-        context['task_instance'].log.info(f'Error API: {e}')
+        context['task_instance'].log.error(f'API request error: {e}')
         raise
     except Exception as e:
-        context['task_instance'].log.error(f'Error DB: {e}')
+        context['task_instance'].log.error(f'Database error: {e}')
         raise
 
 def process_api_data(**context):
