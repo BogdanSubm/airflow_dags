@@ -153,7 +153,7 @@ with DAG(
             """
             select count(1)
             from spiridonov_api_data
-            where load_date = '{{ ds }}'
+            WHERE load_date = '2026-03-31'
             """
         ],
         mode='reschedule',
