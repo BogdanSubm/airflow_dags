@@ -40,7 +40,7 @@ def upload_data(**context):
             host=connection.host,
             port=connection.port
     ) as conn:
-        cursor = conn
+        cursor = conn.cursor()
         cursor.execute(sql_query)
         data = cursor.fetchall()
 
@@ -84,7 +84,7 @@ def combine_data(**context):
                 attempt_type,
                 COUNT(1),
                 COUNT(CASE WHEN is_correct THEN NULL ELSE 1 END) AS attempt_failed_count,
-                '{context["ds"]}'::timestamp,
+                '{context["ds"]}'::timestamp
         FROM spiridonov_admin_table_8
         WHERE created_at >= '{context["ds"]}'::timestamp
         AND created_at < '{context["ds"]}'::timestamp + INTERVAL '1 days'
@@ -100,7 +100,7 @@ def combine_data(**context):
         host=connection.host,
         port=connection.port
     ) as conn:
-        cursor = conn
+        cursor = conn.cursor()
         cursor.execute(sql_query)
         conn.commit()
 
@@ -118,7 +118,7 @@ with DAG(
 
     wait_for_sources = MultiExternalTaskSensor(
         task_id='wait_for_sources',
-        external_dag_id=[
+        external_tasks=[
             {
                 'dag_id': 'spiridonov_a_lesson_8_dag',
                 'task_id': 'load_from_api'
