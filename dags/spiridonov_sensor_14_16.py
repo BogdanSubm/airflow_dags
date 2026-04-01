@@ -7,10 +7,11 @@ class MultiSqlSensor(BaseSensorOperator):
 
     def __init__(self, sql_list, *args,**kwargs):
         super().__init__(*args,**kwargs)
-        self.sql = sql_list
+        self.sql_list = sql_list
 
     def poke(self, context):
         connection = BaseHook.get_connection('conn_pg')
+
 
         with pg.connect(
             dbname='etl',
