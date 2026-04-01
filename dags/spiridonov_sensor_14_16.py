@@ -12,6 +12,7 @@ class MultiSqlSensor(BaseSensorOperator):
     def poke(self, context):
         connection = BaseHook.get_connection('conn_pg')
 
+
         with pg.connect(
             dbname='etl',
             sslmode='disable',
