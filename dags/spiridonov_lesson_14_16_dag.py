@@ -11,7 +11,7 @@ from botocore.client import Config
 
 from spiridonov_sql_sensor import SqlSensor
 
-from sensor_14_16 import MultiSqlSensor
+from spiridonov_sensor_14_16 import MultiSqlSensor
 
 DEFAULT_ARGS = {
     'owner': 'spiridonov_a',
