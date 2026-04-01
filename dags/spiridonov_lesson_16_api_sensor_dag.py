@@ -72,7 +72,7 @@ def fetch_data(**context):
                 ''', (
                     record.get('lti_user_id'),
                     record.get('attempt_type'),
-                    record.get('is_correct'),
+                    bool(record.get('is_correct')) if record.get('is_correct') is not None else None,
                     record.get('created_at'),
                     context['ds']
                 ))
