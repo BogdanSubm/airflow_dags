@@ -9,7 +9,7 @@ from airflow.sensors.time_delta import TimeDeltaSensor
 import boto3
 from botocore.client import Config
 
-from dags.sensors_15.sql_sensor import SqlSensor
+from spiridonov_sql_sensor import SqlSensor
 
 DEFAULT_ARGS = {
     'owner': 'spiridonov_a',
