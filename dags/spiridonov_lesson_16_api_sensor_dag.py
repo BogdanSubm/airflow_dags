@@ -139,7 +139,7 @@ with DAG(
         timeout=7200,
     )
 
-    fetch__data = PythonOperator(
+    fetch_data = PythonOperator(
         task_id='fetch_data',
         python_callable=fetch_data,
     )
