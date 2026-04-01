@@ -42,4 +42,3 @@ with DAG(
 
     dag_start >> sensor >> load_from_api >> dag_end
 
-v
