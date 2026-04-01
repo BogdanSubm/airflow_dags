@@ -89,7 +89,7 @@ def combine_data(**context):
                 attempt_type,
                 COUNT(1),
                 COUNT(CASE WHEN is_correct THEN NULL ELSE 1 END) AS attempt_failed_count,
-                '{context["ds"]}'::timestamp,
+                '{context["ds"]}'::timestamp
         FROM spiridonov_admin_table_8
         WHERE created_at >= '{context["ds"]}'::timestamp
         AND created_at < '{context["ds"]}'::timestamp + INTERVAL '1 days'
@@ -113,8 +113,8 @@ def combine_data(**context):
         conn.commit()
 
 with DAG(
-    dag_id='spiridonov_lesson_14_dag',
-    tags=['14', 'spiridonov'],
+    dag_id='spiridonov_lesson_15_dag',
+    tags=['15', 'spiridonov'],
     schedule='@daily',
     default_args=DEFAULT_ARGS,
     max_active_runs=1,
@@ -145,9 +145,10 @@ with DAG(
         SELECT COUNT(1)
         from spiridonov_admin_table_8
             WHERE created_at >= '{{ ds }}'::timestamp
-            AND created_at < '{{ ds }}'::timestamp + INTERVAL '1 days'""";
-    mode='reschedule',
-    poke_interval=300,
+            AND created_at < '{{ ds }}'::timestamp + INTERVAL '1 days'""",
+        mode='reschedule',
+        poke_interval=300,
+      #  conn_id = 'conn_pg'
     )
 
     combine_data = PythonOperator(
