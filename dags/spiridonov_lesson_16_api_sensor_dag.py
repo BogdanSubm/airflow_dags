@@ -83,7 +83,7 @@ def fetch_data(**context):
         context['task_instance'].log.error(f'Error DB: {e}')
         raise
 
-def process_data(**context):
+def process_api_data(**context):
 
     connection = BaseHook.get_connection('conn_pg')
 
@@ -146,7 +146,7 @@ with DAG(
 
     process_data = PythonOperator(
         task_id='process_data',
-        python_callable=process_data,
+        python_callable=process_api_data,
     )
 
 dag_start >> wait_for_api >> fetch_data >> process_data >> dag_end
