@@ -6,6 +6,11 @@ from datetime import datetime
 
 from airflow.utils.task_group import TaskGroup
 
+import sys
+from pathlib import Path
+dags_path = Path(__file__).parent
+sys.path.append(str(dags_path))
+
 from config.agg_config import config
 from operators.db_operator import create_table, load_table
 from operators.s3_uploader import upload_to_s3
