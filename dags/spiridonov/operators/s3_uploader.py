@@ -1,6 +1,7 @@
 from airflow.hooks.base import BaseHook
+from airflow.operators.python import get_current_context
 
-def upload_to_s3(table_name, ds, **context):
+def upload_to_s3(table_name):
     import psycopg2 as pg
     from io import BytesIO
     import csv
@@ -8,12 +9,16 @@ def upload_to_s3(table_name, ds, **context):
     from botocore.client import Config
     import codecs
 
+    # получаем контекст
+    context = get_current_context()
     log = context['ti'].log
+    ds = context['ds'] # дата выполнения даг
     log.info(f'Start export {table_name}, date: {ds}')
+    # выборка всех данных за дату
     sql_query = f"""
         SELECT *
         FROM {table_name}
-        WHERE load_date = '{ds}'
+        WHERE load_date = %s
     """
 
     connection = BaseHook.get_connection('conn_pg')
@@ -27,11 +32,12 @@ def upload_to_s3(table_name, ds, **context):
             port=connection.port,
     ) as conn:
         cursor = conn.cursor()
-        cursor.execute(sql_query)
+        cursor.execute(sql_query, (ds,))
         data = cursor.fetchall()
         columns = [desc[0] for desc in cursor.description]
     log.info(f'Rows fetched: {len(data)}')
 
+    # исключение если нет данных
     if not data:
         raise ValueError(f'No data found in {table_name}')
 
