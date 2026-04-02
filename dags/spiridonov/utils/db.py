@@ -5,7 +5,7 @@ def get_pg_connection():
     conn = BaseHook.get_connection('conn_pg')
 
     return pg.connect(
-        dbname='etl2',
+        dbname='etl',
         sslmode='disable',
         user=conn.login,
         password=conn.password,
