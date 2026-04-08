@@ -23,4 +23,4 @@ jobs:
           password: ${{ secrets.SSH_PASSWORD }}
           port: 22
           source: "dags/*"
-          target: "/home/airflow_user/airflow/"
+          target: "/home/airflow_user/airflow_hadoop/"
