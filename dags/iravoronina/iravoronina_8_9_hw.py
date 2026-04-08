@@ -187,7 +187,7 @@ def upload_agg_data(**context):
     # Выгружаем данные, которые попали в диапазон недели
     sql_query = f"""
         SELECT * FROM iravoronina_agg_table
-        WHERE date == '{start}'::timestamp;
+        WHERE date = '{start}'::timestamp;
     """
 
     connection = BaseHook.get_connection('conn_pg')
