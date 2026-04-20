@@ -20,11 +20,11 @@ def upload_data(**context):
     from botocore.client import Config
     import codecs
 
-    sql_query = f'''
+    sql_query = f"""
         SELECT * FROM mak_admin_agg_table
         WHERE created_at >= '{context['ds']}'::timestamp
-            AND created_at < '{context['ds']}'::timestamp + INTERVAL "1 days";
-    '''
+            AND created_at < '{context['ds']}'::timestamp + INTERVAL '1 day';
+    """
     connection = BaseHook.get_connection('conn_pg')
 
     with pg.connect(
@@ -47,7 +47,7 @@ def upload_data(**context):
     write_wrapper = codecs.getwriter('utf-8')
 
     writer = csv.writer(
-        writer.wrapper(file),
+        write_wrapper(file),
         delimiter='\t',
         lineterminator='\n',
         quotechar='"',
@@ -70,13 +70,13 @@ def upload_data(**context):
     s3_client.put_object(
         Body=file,
         Bucket='default-storage',
-        key=f"admin_{context['ds']}.csv"
+        Key=f"admin_{context['ds']}.csv"
     )
 
 def combine_data(**context):
     import psycopg2 as pg
 
-    sql_query = f'''
+    sql_query = f"""
         INSERT INTO mak_admin_agg_table
         SELECT lti_user_id,
             attempt_type,
@@ -85,9 +85,9 @@ def combine_data(**context):
             '{context['ds']}'::timestamp
         FROM admin_table
         WHERE created_at >= '{context['ds']}'::timestamp
-            AND created_at < '{context['ds']}'::timestamp + INTERVAL "1 days"   
+            AND created_at < '{context['ds']}'::timestamp + INTERVAL '1 day'   
         GROUP BY lti_user_id, attempt_type;
-    '''  
+    """  
 
     connection = BaseHook.get_connection('conn_pg')
 
@@ -130,4 +130,4 @@ with DAG(
         python_callable=upload_data
     )
 
-    dag_start >> combine_data >> dag_end
+    dag_start >> combine_data >> upload_data >> dag_end
