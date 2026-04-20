@@ -111,7 +111,7 @@ def combine_data(**context):
 with DAG(
     dag_id='mak_dag_combine', 
     tags=['admin', '4'],
-    schedule='@dauly',
+    schedule='@daily',
     default_args=DEFAULT_ARGS,
     max_active_runs=1,
     max_active_tasks=1
