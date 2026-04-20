@@ -22,8 +22,8 @@ def upload_data(**context):
 
     sql_query = f"""
         SELECT * FROM mak_admin_agg_table
-        WHERE created_at >= '{context['ds']}'::timestamp
-            AND created_at < '{context['ds']}'::timestamp + INTERVAL '1 day';
+        WHERE date >= '{context['ds']}'::timestamp
+            AND date < '{context['ds']}'::timestamp + INTERVAL '1 day';
     """
     connection = BaseHook.get_connection('conn_pg')
 
