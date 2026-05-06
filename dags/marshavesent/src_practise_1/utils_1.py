@@ -60,7 +60,7 @@ def load_raw_data(**context):
         password=connection.password,
         host=connection.host,
         port=connection.port,
-        connection_timeout=600,
+        connect_timeout=600,
         keepalives_idle=600,
         tcp_user_timeout=600
     ) as conn:
