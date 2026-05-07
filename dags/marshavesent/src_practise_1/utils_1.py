@@ -118,9 +118,13 @@ def aggregate_data(**context):
     week_start = ti.xcom_pull(task_ids='get_week_boundaries', key='week_start')
     week_end = ti.xcom_pull(task_ids='get_week_boundaries', key='week_end')
     
-    # Агрегация с метриками идемпотичность через Excluded
+    # ИСПРАВЛЕНО: явно указываем столбцы для INSERT
     aggregation_sql = """
-        INSERT INTO marshavesent_agg_data
+        INSERT INTO marshavesent_agg_data 
+        (lti_user_id, attempt_type, lesson_id, lesson_name, 
+         attempt_count, correct_count, incorrect_count, 
+         avg_score, max_score, min_score, stddev_score,
+         first_attempt, last_attempt, week_start, week_end)
         SELECT 
             lti_user_id,
             attempt_type,
@@ -163,15 +167,43 @@ def aggregate_data(**context):
         host=connection.host,
         port=connection.port,
         sslmode='disable',
+        connect_timeout=600,
         keepalives_idle=600,
-        tcp_user_timeout=600,
-        connect_timeout=600
+        tcp_user_timeout=600
     ) as conn:
         with conn.cursor() as cur:
+            # Убедимся, что таблица существует перед вставкой
+            create_table_sql = """
+                CREATE TABLE IF NOT EXISTS marshavesent_agg_data (
+                    id SERIAL PRIMARY KEY,
+                    lti_user_id VARCHAR(255),
+                    attempt_type VARCHAR(50),
+                    lesson_id VARCHAR(255),
+                    lesson_name VARCHAR(500),
+                    attempt_count INTEGER,
+                    correct_count INTEGER,
+                    incorrect_count INTEGER,
+                    avg_score DECIMAL(10,2),
+                    max_score DECIMAL(10,2),
+                    min_score DECIMAL(10,2),
+                    stddev_score DECIMAL(10,2),
+                    first_attempt TIMESTAMP,
+                    last_attempt TIMESTAMP,
+                    week_start TIMESTAMP,
+                    week_end TIMESTAMP,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(lti_user_id, attempt_type, lesson_id, week_start)
+                );
+            """
+            cur.execute(create_table_sql)
+            conn.commit()
+            print("Таблица marshavesent_agg_data проверена/создана")
+            
+            # Выполняем агрегацию
             cur.execute(aggregation_sql, (week_start, week_start, week_start, week_end))
             conn.commit()
             print(f"Агрегированные данные для недели {week_start} до {week_end}")
-
+            
 def export_raw_to_csv(**context):
     """
     Экспортирует сырые данные в CSV и загружает в S3/Minio.
