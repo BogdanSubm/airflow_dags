@@ -5,6 +5,76 @@ import pendulum
 API_URL = "https://b2b.itresume.ru/api/statistics"
 BUCKET_NAME = 'marshavesent-bucket'
 
+#Константы с SQL запросами
+
+AGGREGATION_SQL = """
+    INSERT INTO marshavesent_agg_data 
+    (lti_user_id, attempt_type, lesson_id, lesson_name, 
+     attempt_count, correct_count, incorrect_count, 
+     avg_score, max_score, min_score, stddev_score,
+     first_attempt, last_attempt, week_start, week_end)
+    SELECT 
+        lti_user_id,
+        attempt_type,
+        lesson_id,
+        lesson_name,
+        COUNT(*) as attempt_count,
+        COUNT(CASE WHEN is_correct THEN 1 END) as correct_count,
+        COUNT(CASE WHEN NOT is_correct THEN 1 END) as incorrect_count,
+        ROUND(AVG(score)::numeric, 2) as avg_score,
+        MAX(score) as max_score,
+        MIN(score) as min_score,
+        ROUND(STDDEV(score)::numeric, 2) as stddev_score,
+        MIN(created_at) as first_attempt,
+        MAX(created_at) as last_attempt,
+        %(week_start)s::timestamp as week_start,
+        %(week_start)s::timestamp + interval '6 days' as week_end
+    FROM marshavesent_raw_data
+    WHERE created_at >= %(week_start)s::timestamp 
+        AND created_at < %(week_end)s::timestamp + interval '1 day'
+    GROUP BY lti_user_id, attempt_type, lesson_id, lesson_name
+    ON CONFLICT (lti_user_id, attempt_type, lesson_id, week_start) 
+    DO UPDATE SET
+        attempt_count = EXCLUDED.attempt_count,
+        correct_count = EXCLUDED.correct_count,
+        incorrect_count = EXCLUDED.incorrect_count,
+        avg_score = EXCLUDED.avg_score,
+        max_score = EXCLUDED.max_score,
+        min_score = EXCLUDED.min_score,
+        stddev_score = EXCLUDED.stddev_score,
+        first_attempt = EXCLUDED.first_attempt,
+        last_attempt = EXCLUDED.last_attempt
+"""
+
+CREATE_AGG_TABLE_SQL = """
+    CREATE TABLE IF NOT EXISTS marshavesent_agg_data (
+        id SERIAL PRIMARY KEY,
+        lti_user_id VARCHAR(255),
+        attempt_type VARCHAR(50),
+        lesson_id VARCHAR(255),
+        lesson_name VARCHAR(500),
+        attempt_count INTEGER,
+        correct_count INTEGER,
+        incorrect_count INTEGER,
+        avg_score DECIMAL(10,2),
+        max_score DECIMAL(10,2),
+        min_score DECIMAL(10,2),
+        stddev_score DECIMAL(10,2),
+        first_attempt TIMESTAMP,
+        last_attempt TIMESTAMP,
+        week_start TIMESTAMP,
+        week_end TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(lti_user_id, attempt_type, lesson_id, week_start)
+    )
+"""
+
+DELETE_WEEK_DATA_SQL = """
+    DELETE FROM marshavesent_raw_data 
+    WHERE created_at >= %(week_start)s::timestamp 
+        AND created_at < %(week_end)s::timestamp + interval '1 day'
+"""
+
 def get_week_boundaries(**context):
     """
     Вычисляет начало недели (Понедельник) и конец недели (Воскресенье) для даты выполнения.
