@@ -32,7 +32,7 @@ def get_week_end(execution_date):
     return dt.end_of('week').to_date_string()
 
 with DAG(
-    dag_id='marshavesent_weekly_jinja_lesson_10',
+    dag_id='marshavesent_weekly_jinja_operator_lesson_12',
     tags=['marshavesent', 'weekly', 'jinja', 'postgres_operator'],
     default_args=DEFAULT_ARGS,
     schedule_interval='0 0 * * 1',
