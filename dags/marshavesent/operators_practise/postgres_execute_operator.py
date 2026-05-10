@@ -85,10 +85,7 @@ class PostgresExecuteOperator(BaseOperator):
 class PostgresBranchOperator(BaseOperator):
     """
     Гибкий BranchOperator для проверки дня месяца.
-    Поддерживает загрузку дней из:
-    - Прямого параметра allowed_days
-    - Python модуля (config_module)
-    - JSON файла (config_file)
+    ВАЖНО: Возвращает список task_ids для выполнения.
     """
     
     template_fields = ('allowed_days',)
@@ -146,7 +143,7 @@ class PostgresBranchOperator(BaseOperator):
         return days
     
     def execute(self, context):
-        """Проверяет день и возвращает ID следующей задачи."""
+        """Проверяет день и возвращает список task_ids для выполнения."""
         execution_date = context['execution_date']
         current_day = execution_date.day
         allowed_days = self._get_allowed_days()
@@ -158,7 +155,9 @@ class PostgresBranchOperator(BaseOperator):
         
         if current_day in allowed_days:
             self.log.info(f'✓ День {current_day} разрешен для выполнения')
-            return self.task_id_to_continue
+            # ВАЖНО: Возвращаем список task_ids для продолжения
+            return [self.task_id_to_continue] if self.task_id_to_continue else []
         else:
             self.log.info(f'✗ День {current_day} пропущен')
-            return self.task_id_to_skip
+            # ВАЖНО: Возвращаем список task_ids для пропуска
+            return [self.task_id_to_skip] if self.task_id_to_skip else []
