@@ -61,7 +61,7 @@ with DAG(
     # BranchOperator: проверка дня месяца
     check_day = PostgresBranchOperator(
         task_id='check_execution_day',
-        allowed_days=MONTHLY_RUN_DAYS,  # Используем прямой параметр
+        allowed_days=MONTHLY_RUN_DAYS,
         task_id_to_continue='create_monthly_table',
         task_id_to_skip='workflow_skipped'
     )
@@ -109,11 +109,11 @@ with DAG(
         }
     )
     
-    # Зависимости
+    # ПРАВИЛЬНЫЕ ЗАВИСИМОСТИ ДЛЯ BRANCH
     dag_start >> check_day
     
-    # Ветка выполнения
+    # Ветка 1: День разрешен - полный пайплайн
     check_day >> create_table >> load_data >> check_data >> export_csv >> dag_end
     
-    # Ветка пропуска
+    # Ветка 2: День запрещен - только скип
     check_day >> dag_skip >> dag_end
