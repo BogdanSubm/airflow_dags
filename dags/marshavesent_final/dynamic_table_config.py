@@ -7,8 +7,8 @@ from datetime import datetime
 
 DAG_CONFIG = {
     'schedule_interval': '@daily',
-    'start_date': datetime(2024, 1, 1),
-    'catchup': False,
+    'start_date': datetime(2026, 1, 1),
+    'catchup': True,
     'max_active_runs': 1,
     'max_active_tasks': 3,  # Параллелим выполнение разных таблиц
     'tags': ['marshavesent', 'dynamic'],
