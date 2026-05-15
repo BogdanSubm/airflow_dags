@@ -2,7 +2,7 @@ from datetime import datetime
 from airflow import DAG 
 from airflow.operators.empty import EmptyOperator
 from airflow.operators.python import PythonOperator 
-from airflow.hooks.base import BaseHook 
+from airflow.hooks.base import BaseHook
 
 from tkachev.src.utils import load_from_api, API_URL
 
