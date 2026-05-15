@@ -9,7 +9,7 @@ DEFAULT_ARGS = {
     "owner": "tkachev",
     "retries": 2, 
     "retry_delay": 600,
-    "start_date": datetime(2026, 5, 10)
+    "start_date": datetime(2026, 5, 14)
 }
 
 with DAG( 
