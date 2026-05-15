@@ -1,3 +1,5 @@
+from airflow.hooks.base import BaseHook
+
 API_URL = "https://b2b.itresume.ru/api/statistics"
 
 def load_from_api (**context):
