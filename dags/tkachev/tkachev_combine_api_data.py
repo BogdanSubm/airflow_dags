@@ -28,7 +28,7 @@ with DAG(
 
     combine_data = PythonOperator(
         task_id="combine_data",
-        python_callable="combine_data"
+        python_callable=combine_data
     )
 
     upload_data = PythonOperator(
