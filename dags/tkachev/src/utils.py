@@ -16,7 +16,7 @@ def load_from_api (**context):
     response = requests.get(API_URL, params=payload)
     data = response.json()
 
-    connection = BaseHooK.get_connection('conn_pg')
+    connection = BaseHook.get_connection('conn_pg')
 
     with pg.connect(
         dbname="etl",
