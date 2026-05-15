@@ -4,7 +4,7 @@ from airflow.operators.empty import EmptyOperator
 from airflow.operators.python import PythonOperator 
 from airflow.hooks.base import BaseHook 
 
-from src.utils import load_from_api, API_URL
+from tkachev.src.utils import load_from_api, API_URL
 
 DEFAULT_ARGS = {
     "owner": "tkachev",
