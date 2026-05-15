@@ -45,6 +45,6 @@ def load_from_api (**context):
             row.append(passback_params.get("lis_result_sourcedid"))
             row.append(passback_params.get("lis_outcome_service_url"))
 
-            cursor.execute("INSERT INTO tkachev_api_table VALUES (%s, %s, %s, %s, %s, %s, %s,)", row)
+            cursor.execute("INSERT INTO tkachev_api_table VALUES (%s, %s, %s, %s, %s, %s, %s)", row)
         
         conn.commit()
