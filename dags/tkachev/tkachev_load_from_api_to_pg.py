@@ -22,12 +22,12 @@ with DAG(
     max_active_tasks=1
 ) as dag: 
     
-    dag_start = EmptyOperator(taks_id="dag_start")
+    dag_start = EmptyOperator(task_id="dag_start")
     dag_end = EmptyOperator(task_id="dag_end")
 
     load_from_api = PythonOperator(
         task_id="load_from_api",
-        pythom_callable=load_from_api
+        python_callable=load_from_api
     )
 
     dag_start >> load_from_api >> dag_end
