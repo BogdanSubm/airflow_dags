@@ -1,26 +1,64 @@
 """
 Конфигурация для динамической генерации DAG с помесячной агрегацией.
+Использует Airflow Variables для параметров подключения
 Чтобы добавить новую таблицу - добавьте словарь в TABLE_CONFIGS.
-
 """
 
 from datetime import datetime
+from airflow.models import Variable
 
 DAG_CONFIG = {
-    'schedule_interval': '@daily',  
-    'start_date': datetime(2026, 5, 1),  
-    'catchup': False,  
+    'schedule_interval': '@daily',
+    'start_date': datetime(2026, 5, 1),
+    'catchup': False,
     'max_active_runs': 1,
-    'max_active_tasks': 3,  
-    'tags': ['marshavesent', 'dynamic', 'monthly'],
-    'description': 'Динамическая генерация таблиц с помесячной агрегацией',
+    'max_active_tasks': 3,
+    'tags': ['marshavesent', 'dynamic', 'monthly', 'taskgroup'],
+    'description': 'Динамическая генерация таблиц с TaskGroup и проверкой качества',
 }
 
-CONNECTION_CONFIG = {
-    'pg_conn_id': 'conn_pg',
-    'pg_db': 'etl',
-    's3_conn_id': 'conn_s3',
-    's3_bucket': 'marshavesent-bucket',
+def get_connection_config():
+    """
+    Получает параметры подключения из Airflow Variables.
+    Если переменные не найдены, используются значения по умолчанию.
+    
+    Airflow Variables можно установить через UI (Admin → Variables) или CLI:
+    airflow variables set marshavesent_pg_conn_id conn_pg
+    airflow variables set marshavesent_pg_db etl
+    airflow variables set marshavesent_s3_conn_id conn_s3
+    airflow variables set marshavesent_s3_bucket marshavesent-bucket
+    airflow variables set marshavesent_min_rows_threshold 1
+    """
+    return {
+        'pg_conn_id': Variable.get('marshavesent_pg_conn_id', default_var='conn_pg'),
+        'pg_db': Variable.get('marshavesent_pg_db', default_var='etl'),
+        's3_conn_id': Variable.get('marshavesent_s3_conn_id', default_var='conn_s3'),
+        's3_bucket': Variable.get('marshavesent_s3_bucket', default_var='marshavesent-bucket'),
+        'min_rows_threshold': int(Variable.get('marshavesent_min_rows_threshold', default_var='1')),
+    }
+
+
+QUALITY_THRESHOLDS = {
+    'marshavesent_user_attempts_monthly': {
+        'min_rows': 1,
+        'max_null_pct': 10,  # Максимальный процент NULL в ключевых полях
+        'critical_columns': ['lti_user_id', 'attempt_type', 'year_month']
+    },
+    'marshavesent_lesson_stats_monthly': {
+        'min_rows': 1,
+        'max_null_pct': 10,
+        'critical_columns': ['lesson_id', 'year_month']
+    },
+    'marshavesent_daily_activity_monthly': {
+        'min_rows': 1,
+        'max_null_pct': 10,
+        'critical_columns': ['activity_date', 'attempt_type', 'year_month']
+    },
+    'marshavesent_monthly_summary': {
+        'min_rows': 1,
+        'max_null_pct': 5,
+        'critical_columns': ['year_month']
+    },
 }
 
 TABLE_CONFIGS = [
