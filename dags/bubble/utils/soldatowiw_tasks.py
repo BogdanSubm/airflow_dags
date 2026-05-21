@@ -6,7 +6,7 @@ def get_conn():
     import psycopg2
     creds = BaseHook.get_connection('postgres_bubble')
     return psycopg2.connect(
-        dbname='soldatowiw',
+        dbname='etl',
         sslmode='disable',
         user=creds.login,
         password=creds.password,
