@@ -22,7 +22,8 @@ def load_from_api(**context):
     import ast
 
     ds = context['ds']
-    end_date = (datetime.strptime(ds, '%Y-%m-%d') + timedelta(days=7)).strftime('%Y-%m-%d')
+    
+    end_date = (datetime.strptime(ds, '%Y-%m-%d') + timedelta(days=1)).strftime('%Y-%m-%d')
 
     payload = {
         'client': 'Skillfactory',
@@ -63,7 +64,7 @@ def load_from_api(**context):
 
 def aggregate(**context):
     ds = context['ds']
-    period_end = (datetime.strptime(ds, '%Y-%m-%d') + timedelta(days=7)).strftime('%Y-%m-%d')
+    period_end = (datetime.strptime(ds, '%Y-%m-%d') + timedelta(days=1)).strftime('%Y-%m-%d')
 
     with get_conn() as conn:
         cursor = conn.cursor()
