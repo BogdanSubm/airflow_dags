@@ -1,4 +1,3 @@
-from datetime import datetime, timedelta
 from airflow.hooks.base import BaseHook
 
 
@@ -17,13 +16,9 @@ def get_conn():
     )
 
 
-def load_from_api(**context):
+def load_from_api(ds, end_date):
     import requests
     import ast
-
-    ds = context['ds']
-    
-    end_date = (datetime.strptime(ds, '%Y-%m-%d') + timedelta(days=1)).strftime('%Y-%m-%d')
 
     payload = {
         'client': 'Skillfactory',
@@ -62,9 +57,7 @@ def load_from_api(**context):
         conn.commit()
 
 
-def aggregate(**context):
-    ds = context['ds']
-    period_end = (datetime.strptime(ds, '%Y-%m-%d') + timedelta(days=1)).strftime('%Y-%m-%d')
+def aggregate(ds, period_end):
 
     with get_conn() as conn:
         cursor = conn.cursor()
