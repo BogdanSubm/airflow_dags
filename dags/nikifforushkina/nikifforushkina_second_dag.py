@@ -26,7 +26,7 @@ def upload_data(**context):
     import codecs
 
     sql_query = f"""
-        SELECT * FROM nikifforushkina _agg_table
+        SELECT * FROM nikifforushkina_agg_table
         WHERE date >= '{context['ds']}'::timestamp 
               AND date < '{context['ds']}'::timestamp + INTERVAL '1 days';
     """
