@@ -9,7 +9,7 @@ DEFAULT_ARGS = {
     'owner': 'nikifforushkina',
     'retries': 2,
     'retry_delay': 600,
-    'start_date': datetime(2026, 05, 26),
+    'start_date': datetime(2026, 5, 26),
 }
 
 API_URL = "https://b2b.itresume.ru/api/statistics"
