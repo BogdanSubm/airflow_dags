@@ -62,7 +62,7 @@ def load_from_api(**context):
 
 
 with DAG(
-    dag_id="load_from_api_to_pg",
+    dag_id="load_from_api_to_pg_nikifforushkina",
     tags=['4', 'nikifforushkina'],
     schedule='@daily',
     default_args=DEFAULT_ARGS,
