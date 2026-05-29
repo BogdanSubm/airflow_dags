@@ -3,21 +3,35 @@ from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.empty import EmptyOperator
 from airflow.operators.python import PythonOperator
-from airflow.sensors.external_task import ExternalTaskSensor
-from airflow.sensors.time_delta import TimeDeltaSensor
 from airflow.hooks.base import BaseHook
 
-from sensors.sql_sensor import SqlSensor
-
 DEFAULT_ARGS = {
-    'owner': 'nikifforushkina',
+    'owner': 'admin',
     'retries': 2,
     'retry_delay': 600,
-    'start_date': datetime(2026, 5, 27),
+    'start_date': datetime(2024, 11, 13),
 }
 
 
-def upload_data(**context):
+class WeekTemplates:
+    @staticmethod
+    def current_week_start(date) -> str:
+        logical_dt = datetime.strptime(date, "%Y-%m-%d")
+
+        current_week_start = logical_dt - timedelta(days=logical_dt.weekday())
+
+        return current_week_start.strftime("%Y-%m-%d")
+
+    @staticmethod
+    def current_week_end(date) -> str:
+        logical_dt = datetime.strptime(date, "%Y-%m-%d")
+
+        current_week_end = logical_dt + timedelta(days=6 - logical_dt.weekday())
+
+        return current_week_end.strftime("%Y-%m-%d")
+
+
+def upload_data(week_start: str, week_end: str, **context):
     import psycopg2 as pg
     from io import BytesIO
     import csv
@@ -26,9 +40,9 @@ def upload_data(**context):
     import codecs
 
     sql_query = f"""
-        SELECT * FROM nikifforushkina_agg_table
-        WHERE date >= '{context['ds']}'::timestamp 
-              AND date < '{context['ds']}'::timestamp + INTERVAL '1 days';
+        SELECT * FROM admin_agg_table_weekly
+        WHERE date >= '{week_start}'::timestamp 
+              AND date < '{week_end}'::timestamp + INTERVAL '1 days';
     """
 
     connection = BaseHook.get_connection('conn_pg')
@@ -76,23 +90,23 @@ def upload_data(**context):
     s3_client.put_object(
         Body=file,
         Bucket='default-storage',
-        Key=f"nikifforushkina_{context['ds']}.csv"
+        Key=f"admin_{week_start}_{context['ds']}.csv"
     )
 
 
-def combine_data(**context):
+def combine_data(week_start: str, week_end: str, **context):
     import psycopg2 as pg
 
     sql_query = f"""
-        INSERT INTO nikifforushkina_agg_table
+        INSERT INTO admin_agg_table_weekly
         SELECT lti_user_id,
                attempt_type,
                COUNT(1),
                COUNT(CASE WHEN is_correct THEN NULL ELSE 1 END) AS attempt_failed_count,
-               '{context['ds']}'::timestamp
-          FROM nikifforushkina_raw_table
-         WHERE created_at >= '{context['ds']}'::timestamp 
-               AND created_at < '{context['ds']}'::timestamp + INTERVAL '1 days'
+               '{week_start}'::timestamp
+          FROM admin_table
+         WHERE created_at >= '{week_start}'::timestamp 
+               AND created_at < '{week_end}'::timestamp + INTERVAL '1 days'
           GROUP BY lti_user_id, attempt_type;
     """
 
@@ -115,12 +129,17 @@ def combine_data(**context):
 
 
 with DAG(
-    dag_id="combine_api_data_nikifforushkina",
-    tags=['nikifforushkina', '4'],
+    dag_id="combine_api_data_weekly",
+    tags=['admin', '5'],
     schedule='@daily',
     default_args=DEFAULT_ARGS,
     max_active_runs=1,
-    max_active_tasks=1
+    max_active_tasks=1,
+    user_defined_macros={
+        "current_week_start": WeekTemplates.current_week_start,
+        "current_week_end": WeekTemplates.current_week_end,
+    },
+    render_template_as_native_obj=True
 ) as dag:
 
     dag_start = EmptyOperator(task_id='dag_start')
@@ -129,11 +148,19 @@ with DAG(
     combine_data = PythonOperator(
         task_id='combine_data',
         python_callable=combine_data,
+        op_kwargs={
+            'week_start': '{{ current_week_start(ds) }}',
+            'week_end': '{{ current_week_end(ds) }}',
+        }
     )
 
     upload_data = PythonOperator(
         task_id='upload_data',
         python_callable=upload_data,
+        op_kwargs={
+            'week_start': '{{ current_week_start(ds) }}',
+            'week_end': '{{ current_week_end(ds) }}',
+        }
     )
 
     dag_start >> combine_data >> upload_data >> dag_end
