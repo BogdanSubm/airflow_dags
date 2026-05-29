@@ -16,7 +16,7 @@ API_URL = "https://b2b.itresume.ru/api/statistics"
 
 def get_week_dates(ds):
     import pendulum
-    last_week = pendulum.parse(ds).subtract(weeks=1)
+    last_week = pendulum.parse(ds)
     return last_week.start_of('week').to_date_string(), last_week.end_of('week').to_date_string()
 
 def load_from_api(**context):
