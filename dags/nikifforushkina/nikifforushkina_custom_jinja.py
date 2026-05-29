@@ -6,10 +6,10 @@ from airflow.operators.python import PythonOperator
 from airflow.hooks.base import BaseHook
 
 DEFAULT_ARGS = {
-    'owner': 'admin',
+    'owner': 'nikifforushkina',
     'retries': 2,
     'retry_delay': 600,
-    'start_date': datetime(2024, 11, 13),
+    'start_date': datetime(2026, 5, 29),
 }
 
 
@@ -40,7 +40,7 @@ def upload_data(week_start: str, week_end: str, **context):
     import codecs
 
     sql_query = f"""
-        SELECT * FROM admin_agg_table_weekly
+        SELECT * FROM nikifforushkina_agg_table_weekly
         WHERE date >= '{week_start}'::timestamp 
               AND date < '{week_end}'::timestamp + INTERVAL '1 days';
     """
@@ -90,7 +90,7 @@ def upload_data(week_start: str, week_end: str, **context):
     s3_client.put_object(
         Body=file,
         Bucket='default-storage',
-        Key=f"admin_{week_start}_{context['ds']}.csv"
+        Key=f"nikifforushkina_{week_start}_{context['ds']}.csv"
     )
 
 
@@ -98,13 +98,13 @@ def combine_data(week_start: str, week_end: str, **context):
     import psycopg2 as pg
 
     sql_query = f"""
-        INSERT INTO admin_agg_table_weekly
+        INSERT INTO nikifforushkina_agg_table_weekly
         SELECT lti_user_id,
                attempt_type,
                COUNT(1),
                COUNT(CASE WHEN is_correct THEN NULL ELSE 1 END) AS attempt_failed_count,
                '{week_start}'::timestamp
-          FROM admin_table
+          FROM nikifforushkina_raw_table
          WHERE created_at >= '{week_start}'::timestamp 
                AND created_at < '{week_end}'::timestamp + INTERVAL '1 days'
           GROUP BY lti_user_id, attempt_type;
@@ -130,7 +130,7 @@ def combine_data(week_start: str, week_end: str, **context):
 
 with DAG(
     dag_id="combine_api_data_weekly",
-    tags=['admin', '5'],
+    tags=['nikifforushkina', '5'],
     schedule='@daily',
     default_args=DEFAULT_ARGS,
     max_active_runs=1,
