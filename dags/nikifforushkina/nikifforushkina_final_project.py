@@ -5,7 +5,7 @@ from airflow.operators.empty import EmptyOperator
 from airflow.operators.python import PythonOperator
 from airflow.hooks.base import BaseHook
 
-from postgres_operator import PostgresOperator
+from nikifforushkina_PostgresOperator import PostgresOperator
 
 DEFAULT_ARGS = {
     'owner': 'nikifforushkina',
