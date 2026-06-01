@@ -4,6 +4,12 @@ from airflow import DAG
 from airflow.operators.empty import EmptyOperator
 from airflow.operators.python import PythonOperator
 
+
+import sys
+from pathlib import Path
+dags_path = Path(__file__).parent
+sys.path.append(str(dags_path))
+
 from f0rtunaa_Conf import config
 from f0rtunaa_utils import upload_to_s3
 from OP.f0rtunaa_Agg_op import AggTableOperator
