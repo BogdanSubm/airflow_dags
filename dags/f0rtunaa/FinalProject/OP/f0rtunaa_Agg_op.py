@@ -1,5 +1,5 @@
 from airflow.models import BaseOperator
-from f0rtunaa_pgcon import _get_pg_conn
+from OP.f0rtunaa_pgcon import _get_pg_conn
 
 
 class AggTableOperator(BaseOperator):
