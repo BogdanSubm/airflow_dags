@@ -27,19 +27,11 @@ with DAG(
     load_task = PythonOperator(
         task_id='load_from_api',
         python_callable=load_from_api,
-        op_kwargs={
-            'ds': '{{ ds }}',
-            'end_date': '{{ macros.ds_add(ds, 1) }}',
-        },
     )
 
     agg_task = PythonOperator(
         task_id='aggregate',
         python_callable=aggregate,
-        op_kwargs={
-            'ds': '{{ ds }}',
-            'period_end': '{{ macros.ds_add(ds, 1) }}',
-        },
     )
 
 dag_start >> load_task >> agg_task >> dag_end
