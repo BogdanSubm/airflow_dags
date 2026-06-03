@@ -1,10 +1,9 @@
-from datetime import datetime, timedelta
 from airflow.hooks.base import BaseHook
 
 
 def get_conn():
     import psycopg2
-    creds = BaseHook.get_connection('postgres_bubble')
+    creds = BaseHook.get_connection('conn_pg')
     return psycopg2.connect(
         dbname='etl',
         sslmode='disable',
@@ -17,13 +16,9 @@ def get_conn():
     )
 
 
-def load_from_api(**context):
+def load_from_api(ds, end_date):
     import requests
     import ast
-
-    ds = context['ds']
-    
-    end_date = (datetime.strptime(ds, '%Y-%m-%d') + timedelta(days=1)).strftime('%Y-%m-%d')
 
     payload = {
         'client': 'Skillfactory',
@@ -62,20 +57,47 @@ def load_from_api(**context):
         conn.commit()
 
 
-def aggregate(**context):
-    ds = context['ds']
-    period_end = (datetime.strptime(ds, '%Y-%m-%d') + timedelta(days=1)).strftime('%Y-%m-%d')
+def export_to_s3(table_name, ds):
+    # Выгрузка содержимого таблицы за период ds в объектное хранилище в CSV.
+    # Тяжёлые импорты внутри функции (см. CLAUDE.md).
+    import csv
+    import io
+
+    from bubble.utils.soldatowiw_s3 import get_s3_client
+
+    with get_conn() as conn:
+        cursor = conn.cursor()
+        # table_name из доверенного config (не пользовательский ввод) → конкатенация.
+        cursor.execute('SELECT * FROM ' + table_name + ' WHERE ds = %s', (ds,))
+        rows = cursor.fetchall()
+        header = [col.name for col in cursor.description]
+
+    buffer = io.StringIO()
+    writer = csv.writer(buffer)
+    writer.writerow(header)
+    writer.writerows(rows)
+
+    s3_client = get_s3_client()
+    # Один и тот же ключ на каждый запуск за ds → перезапись, экспорт идемпотентен.
+    s3_client.put_object(
+        Body=buffer.getvalue().encode('utf-8'),
+        Bucket='default-storage',
+        Key='soldatowiw/' + table_name + '/' + ds + '.csv',
+    )
+
+
+def aggregate(ds, period_end):
 
     with get_conn() as conn:
         cursor = conn.cursor()
         cursor.execute(
             '''
             SELECT
-                COUNT(*)                                                    AS total_attempts,
-                SUM(CASE WHEN is_correct THEN 1 ELSE 0 END)                AS correct_attempts,
-                SUM(CASE WHEN NOT is_correct THEN 1 ELSE 0 END)            AS incorrect_attempts,
-                COUNT(DISTINCT lti_user_id)                                 AS unique_users,
-                ROUND(AVG(CASE WHEN is_correct THEN 1.0 ELSE 0.0 END), 4)  AS correct_rate
+                COUNT(*) AS total_attempts,
+                SUM(CASE WHEN is_correct THEN 1 ELSE 0 END) AS correct_attempts,
+                SUM(CASE WHEN NOT is_correct THEN 1 ELSE 0 END) AS incorrect_attempts,
+                COUNT(DISTINCT lti_user_id) AS unique_users,
+                ROUND(AVG(CASE WHEN is_correct THEN 1.0 ELSE 0.0 END), 4) AS correct_rate
             FROM soldatowiw_raw_table
             WHERE ds = %s
             ''',
