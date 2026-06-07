@@ -4,8 +4,10 @@ from airflow import DAG
 from airflow.operators.empty import EmptyOperator
 from airflow.operators.python import PythonOperator
 
+from enjout.operators.postgres_operator import PostgresOperator
 from enjout.src.utils import (
-    aggregate_data,
+    AGGREGATION_SQL,
+    CREATE_AGG_TABLE_SQL,
     export_aggregated_to_s3,
     load_raw_data,
 )
@@ -35,8 +37,8 @@ class WeekTemplates:
 
 with DAG(
     dag_id='enjout_weekly_jinja',
-    tags=['enjout', 'weekly', 'jinja', 'api', 'postgres', 's3'],
-    description='Еженедельная выгрузка с Jinja-шаблонами',
+    tags=['enjout', 'weekly', 'jinja', 'postgres_operator', 'api', 'postgres', 's3'],
+    description='Еженедельная выгрузка с Jinja-шаблонами и PostgresOperator',
     schedule='0 7 * * 1',
     default_args=DEFAULT_ARGS,
     catchup=False,
@@ -58,6 +60,11 @@ with DAG(
         'execution_date': '{{ ds }}',
     }
 
+    aggregation_parameters = {
+        'week_start': '{{ previous_week_start(ds) }}',
+        'week_end': '{{ previous_week_end(ds) }}',
+    }
+
     load_raw_data_task = PythonOperator(
         task_id='load_raw_data',
         python_callable=load_raw_data,
@@ -65,10 +72,12 @@ with DAG(
         execution_timeout=timedelta(hours=1),
     )
 
-    aggregate_data_task = PythonOperator(
+    aggregate_data_task = PostgresOperator(
         task_id='aggregate_data',
-        python_callable=aggregate_data,
-        op_kwargs=jinja_kwargs,
+        sql=[CREATE_AGG_TABLE_SQL, AGGREGATION_SQL],
+        parameters=aggregation_parameters,
+        postgres_conn_id='conn_pg',
+        database='etl',
         execution_timeout=timedelta(hours=1),
     )
 
