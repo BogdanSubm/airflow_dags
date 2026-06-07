@@ -39,6 +39,35 @@ CREATE_AGG_TABLE_SQL = f"""
     );
 """
 
+AGGREGATION_SQL = f"""
+    INSERT INTO {AGG_TABLE}
+    (attempt_type, period_start, period_end,
+     total_attempts, correct_attempts, incorrect_attempts,
+     unique_users, avg_correct_rate, min_created_at, max_created_at)
+    SELECT
+        attempt_type,
+        %(week_start)s::date AS period_start,
+        %(week_end)s::date AS period_end,
+        COUNT(*) AS total_attempts,
+        COUNT(CASE WHEN is_correct THEN 1 END) AS correct_attempts,
+        COUNT(CASE WHEN NOT is_correct THEN 1 END) AS incorrect_attempts,
+        COUNT(DISTINCT lti_user_id) AS unique_users,
+        ROUND(AVG(CASE WHEN is_correct THEN 1.0 ELSE 0.0 END), 4) AS avg_correct_rate,
+        MIN(created_at) AS min_created_at,
+        MAX(created_at) AS max_created_at
+    FROM {RAW_TABLE}
+    WHERE period_start = %(week_start)s::date AND period_end = %(week_end)s::date
+    GROUP BY attempt_type
+    ON CONFLICT (attempt_type, period_start, period_end) DO UPDATE SET
+        total_attempts = EXCLUDED.total_attempts,
+        correct_attempts = EXCLUDED.correct_attempts,
+        incorrect_attempts = EXCLUDED.incorrect_attempts,
+        unique_users = EXCLUDED.unique_users,
+        avg_correct_rate = EXCLUDED.avg_correct_rate,
+        min_created_at = EXCLUDED.min_created_at,
+        max_created_at = EXCLUDED.max_created_at
+"""
+
 
 def _get_db_connection():
     import psycopg2 as pg
@@ -123,44 +152,6 @@ def load_raw_data(week_start: str, week_end: str, execution_date: str):
 
         conn.commit()
         print(f'Загружено {inserted} записей в {RAW_TABLE}')
-
-
-def aggregate_data(week_start: str, week_end: str, execution_date: str):
-    aggregation_sql = f"""
-        INSERT INTO {AGG_TABLE}
-        (attempt_type, period_start, period_end,
-         total_attempts, correct_attempts, incorrect_attempts,
-         unique_users, avg_correct_rate, min_created_at, max_created_at)
-        SELECT
-            attempt_type,
-            %s::date AS period_start,
-            %s::date AS period_end,
-            COUNT(*) AS total_attempts,
-            COUNT(CASE WHEN is_correct THEN 1 END) AS correct_attempts,
-            COUNT(CASE WHEN NOT is_correct THEN 1 END) AS incorrect_attempts,
-            COUNT(DISTINCT lti_user_id) AS unique_users,
-            ROUND(AVG(CASE WHEN is_correct THEN 1.0 ELSE 0.0 END), 4) AS avg_correct_rate,
-            MIN(created_at) AS min_created_at,
-            MAX(created_at) AS max_created_at
-        FROM {RAW_TABLE}
-        WHERE period_start = %s::date AND period_end = %s::date
-        GROUP BY attempt_type
-        ON CONFLICT (attempt_type, period_start, period_end) DO UPDATE SET
-            total_attempts = EXCLUDED.total_attempts,
-            correct_attempts = EXCLUDED.correct_attempts,
-            incorrect_attempts = EXCLUDED.incorrect_attempts,
-            unique_users = EXCLUDED.unique_users,
-            avg_correct_rate = EXCLUDED.avg_correct_rate,
-            min_created_at = EXCLUDED.min_created_at,
-            max_created_at = EXCLUDED.max_created_at
-    """
-
-    with _get_db_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute(CREATE_AGG_TABLE_SQL)
-        cursor.execute(aggregation_sql, (week_start, week_end, week_start, week_end))
-        conn.commit()
-        print(f'Агрегация завершена для периода {week_start} — {week_end} (ds={execution_date})')
 
 
 def export_aggregated_to_s3(week_start: str, week_end: str, execution_date: str):
