@@ -68,29 +68,8 @@ def _parse_passback_params(passback_str):
         return {}
 
 
-def get_week_boundaries(**context):
-    import pendulum
-
-    execution_date = pendulum.parse(context['ds'])
-    week_start = execution_date.subtract(weeks=1).start_of('week')
-    week_end = week_start.end_of('week')
-
-    context['task_instance'].xcom_push(
-        key='week_start', value=week_start.to_date_string()
-    )
-    context['task_instance'].xcom_push(
-        key='week_end', value=week_end.to_date_string()
-    )
-
-    print(f'Период выгрузки: {week_start.to_date_string()} — {week_end.to_date_string()}')
-
-
-def load_raw_data(**context):
+def load_raw_data(week_start: str, week_end: str, execution_date: str):
     import requests
-
-    ti = context['task_instance']
-    week_start = ti.xcom_pull(task_ids='get_week_boundaries', key='week_start')
-    week_end = ti.xcom_pull(task_ids='get_week_boundaries', key='week_end')
 
     payload = {
         'client': 'Skillfactory',
@@ -99,7 +78,7 @@ def load_raw_data(**context):
         'end': week_end,
     }
 
-    print(f'Запрос API: {week_start} — {week_end}')
+    print(f'Запрос API за период {week_start} — {week_end} (ds={execution_date})')
     response = requests.get(API_URL, params=payload, timeout=60)
     response.raise_for_status()
     data = response.json()
@@ -146,11 +125,7 @@ def load_raw_data(**context):
         print(f'Загружено {inserted} записей в {RAW_TABLE}')
 
 
-def aggregate_data(**context):
-    ti = context['task_instance']
-    week_start = ti.xcom_pull(task_ids='get_week_boundaries', key='week_start')
-    week_end = ti.xcom_pull(task_ids='get_week_boundaries', key='week_end')
-
+def aggregate_data(week_start: str, week_end: str, execution_date: str):
     aggregation_sql = f"""
         INSERT INTO {AGG_TABLE}
         (attempt_type, period_start, period_end,
@@ -185,20 +160,16 @@ def aggregate_data(**context):
         cursor.execute(CREATE_AGG_TABLE_SQL)
         cursor.execute(aggregation_sql, (week_start, week_end, week_start, week_end))
         conn.commit()
-        print(f'Агрегация завершена для периода {week_start} — {week_end}')
+        print(f'Агрегация завершена для периода {week_start} — {week_end} (ds={execution_date})')
 
 
-def export_aggregated_to_s3(**context):
+def export_aggregated_to_s3(week_start: str, week_end: str, execution_date: str):
     import csv
     import codecs
     from io import BytesIO
 
     import boto3
     from botocore.client import Config
-
-    ti = context['task_instance']
-    week_start = ti.xcom_pull(task_ids='get_week_boundaries', key='week_start')
-    week_end = ti.xcom_pull(task_ids='get_week_boundaries', key='week_end')
 
     sql_query = f"""
         SELECT attempt_type, period_start, period_end,
@@ -236,6 +207,6 @@ def export_aggregated_to_s3(**context):
         config=Config(signature_version='s3v4'),
     )
 
-    key = f'enjout_agg_{week_start}_to_{week_end}.csv'
+    key = f'enjout_agg_{week_start}_to_{week_end}_{execution_date}.csv'
     s3_client.put_object(Body=file, Bucket=BUCKET_NAME, Key=key)
     print(f'CSV загружен в {BUCKET_NAME}/{key}')
