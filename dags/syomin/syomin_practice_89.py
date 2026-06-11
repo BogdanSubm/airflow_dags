@@ -13,15 +13,16 @@ DEFAULT_ARGS = {
 
 API_URL = "https://b2b.itresume.ru/api/statistics"
 
+
 def load_from_api(**context):
     import requests
     import pendulum
     import psycopg2 as pg
     import ast
-    
+
     week_start = context['ds']
     week_end = pendulum.parse(context['ds']).add(days=6).to_date_string()
-    
+
     context['ti'].xcom_push(key='week_start', value=week_start)
     context['ti'].xcom_push(key='week_end', value=week_end)
 
@@ -31,11 +32,12 @@ def load_from_api(**context):
         'start': week_start,
         'end': week_end,
     }
-    
+
     response = requests.get(API_URL, params=payload)
     data = response.json()
     save_row_data(data, week_start, week_end)
-    
+
+
 def save_row_data(data, week_start, week_end):
     import psycopg2 as pg
     import ast
@@ -43,11 +45,11 @@ def save_row_data(data, week_start, week_end):
     connection = BaseHook.get_connection('conn_pg')
 
     with pg.connect(
-        dbname='etl',
-        user=connection.login,
-        password=connection.password,
-        host=connection.host,
-        port=connection.port,
+            dbname='etl',
+            user=connection.login,
+            password=connection.password,
+            host=connection.host,
+            port=connection.port,
     ) as conn:
         cursor = conn.cursor()
 
@@ -77,8 +79,8 @@ def save_row_data(data, week_start, week_end):
             ))
 
         conn.commit()
-    
-    
+
+
 def agg_day_data(**context):
     import psycopg2 as pg
     week_start = context['ti'].xcom_pull(key='week_start')
@@ -87,15 +89,13 @@ def agg_day_data(**context):
     connection = BaseHook.get_connection('conn_pg')
 
     with pg.connect(
-        dbname='etl',
-        user=connection.login,
-        password=connection.password,
-        host=connection.host,
-        port=connection.port,
+            dbname='etl',
+            user=connection.login,
+            password=connection.password,
+            host=connection.host,
+            port=connection.port,
     ) as conn:
         cursor = conn.cursor()
-
-
 
         cursor.execute("""
                        SELECT COUNT(*)
@@ -133,28 +133,27 @@ def agg_day_data(**context):
         """, (week_start, week_end, week_start, week_end))
 
         conn.commit()
-		
 
-with DAG (
-	dag_id = 'syomin_practice_89',
-	tags = ['89','syomin'],
-	schedule='0 0 * * 1',
-	default_args=DEFAULT_ARGS,
-	max_active_runs=1,
-	max_active_tasks=1
+
+with DAG(
+        dag_id='syomin_practice_89',
+        tags=['89', 'syomin'],
+        schedule='0 0 * * 1',
+        default_args=DEFAULT_ARGS,
+        max_active_runs=1,
+        max_active_tasks=1
 ) as dag:
+    dag_start = EmptyOperator(task_id='dag_start')
+    dag_end = EmptyOperator(task_id='dag_end')
 
-	dag_start = EmptyOperator(task_id='dag_start')
-	dag_end= EmptyOperator(task_id='dag_end')
-    
-	load_from_api = PythonOperator(
-		task_id='load_from_api',
-		python_callable=load_from_api,
-	)
-    
-    agg_day_data = PythonOperator(
-        task_id='agg_day_data',
-        python_callable=agg_day_data,
+    load_from_api = PythonOperator(
+        task_id='load_from_api',
+        python_callable=load_from_api,
     )
-    
-	dag_start >> load_from_api >> agg_day_data >> dag_end
+
+agg_day_data = PythonOperator(
+    task_id='agg_day_data',
+    python_callable=agg_day_data,
+)
+
+dag_start >> load_from_api >> agg_day_data >> dag_end
