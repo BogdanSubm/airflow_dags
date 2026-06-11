@@ -8,7 +8,13 @@ from airflow.operators.bash     import BashOperator
 
 from datetime import datetime
 
-from .src.utils import python_test_func # работай уже давай
+import sys
+import os
+
+# Добавляем папку Tolstyakoff в путь
+sys.path.insert(0, os.path.dirname(__file__))
+# Теперь абсолютный импорт работает
+from src.utils import python_test_func
 
 
 with DAG (
