@@ -5,7 +5,7 @@ from airflow.operators.empty    import EmptyOperator
 from airflow.operators.bash     import BashOperator
 
 from datetime import datetime
-from Lesson2.src.utils import python_test_func
+from src.utils import python_test_func
 
 with DAG (
     dag_id ='tolstyakoff_lesson2_dag',
