@@ -8,13 +8,7 @@ from airflow.operators.bash     import BashOperator
 
 from datetime import datetime
 
-import sys
-import os
-
-# Добавляем текущую папку (Tolstyakoff) в путь
-sys.path.append(os.path.dirname(__file__))
-# Теперь можно импортировать из src
-from src.utils import python_test_func
+from .src.utils import python_test_func # работай уже давай
 
 
 with DAG (
