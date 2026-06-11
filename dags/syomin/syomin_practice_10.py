@@ -114,7 +114,7 @@ def agg_day_data(week_start, week_end, **kwargs):
         conn.commit()
 
 with DAG(
-    dag_id='syomin_practice_89',
+    dag_id='syomin_practice_10',
     tags=['10', 'syomin'],
     schedule='0 0 * * 1',
     default_args=DEFAULT_ARGS,
