@@ -18,7 +18,6 @@ API_URL = "https://b2b.itresume.ru/api/statistics"
 
 
 def load_from_api(**context):
-
     import requests
     import pendulum
     import psycopg2 as pg
@@ -32,76 +31,64 @@ def load_from_api(**context):
     }
 
     response = requests.get(API_URL, params=payload)
-
     data = response.json()
-   
     
     connection = BaseHook.get_connection('conn_pg')
 
     with pg.connect(
-        dbname='neondb',
-        sslmode='require',
+        dbname='etl',
+        sslmode='disable',
         user=connection.login,
         password=connection.password,
         host=connection.host,
         port=connection.port,
-        connect_timeout=600,
-        keepalives_idle=600,
-        tcp_user_timeout=600
+        connect_timeout=600
     ) as conn:
 
         cursor = conn.cursor()
+        
+        # 1. СОЗДАЕМ ТАБЛИЦУ, ЕСЛИ ЕЕ НЕТ
+        # Типы данных подобраны на основе вашего row.append(...)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS admin_table_pntra (
+                lti_user_id TEXT,
+                is_correct BOOLEAN,
+                attempt_type TEXT,
+                created_at TIMESTAMP,
+                oauth_consumer_key TEXT,
+                lis_result_sourcedid TEXT,
+                lis_outcome_service_url TEXT
+            );
+        """)
+
         load_date = context['ds']
-# удаляем старые данные за этот день
+        
+        # 2. Удаляем старые данные за этот день
         cursor.execute(
-            """
-            DELETE FROM admin_table_pntra
-            WHERE created_at::date = %s
-            """,
+            "DELETE FROM admin_table_pntra WHERE created_at::date = %s",
             (load_date,)
         )
-        print(f"Данные за {load_date} удалены")
+        print(f"Данные за {load_date} удалены или таблица была пуста")
 
-
+        # 3. Вставляем данные
         for el in data:
-
-            row = []
-
-            passback_params = ast.literal_eval(
-                el.get('passback_params', '{}')
-            )
-
-            row.append(el.get('lti_user_id'))
-
-            row.append(
-                True if el.get('is_correct') == 1 else False
-            )
-
-            row.append(el.get('attempt_type'))
-
-            row.append(el.get('created_at'))
-
-            row.append(
-                passback_params.get('oauth_consumer_key')
-            )
-
-            row.append(
-                passback_params.get('lis_result_sourcedid')
-            )
-
-            row.append(
+            passback_params = ast.literal_eval(el.get('passback_params', '{}'))
+            
+            row = [
+                el.get('lti_user_id'),
+                True if el.get('is_correct') == 1 else False,
+                el.get('attempt_type'),
+                el.get('created_at'),
+                passback_params.get('oauth_consumer_key'),
+                passback_params.get('lis_result_sourcedid'),
                 passback_params.get('lis_outcome_service_url')
-            )
+            ]
 
             cursor.execute(
-                """
-                INSERT INTO admin_table_pntra
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
-                """,
+                "INSERT INTO admin_table_pntra VALUES (%s, %s, %s, %s, %s, %s, %s)",
                 row
             )
         
-
         conn.commit()
 
 
