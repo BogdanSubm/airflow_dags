@@ -14,7 +14,7 @@ DEFAULT_ARGS = {
 API_URL = "https://b2b.itresume.ru/api/statistics"
 
 def load_from_api(**context):
-	import requests
+    import requests
     import pendulum
     import psycopg2 as pg
     import ast
