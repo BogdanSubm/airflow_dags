@@ -34,7 +34,7 @@ def query_func ():
     return records
 
 with DAG (
-    dag_id ='tolstyakoff_lesson4_dag',
+    dag_id ='tolstyakoff_lesson4_sql_dag',
     schedule = '@once',
     start_date = datetime(2026, 6, 11), 
     catchup=False,  # 👈 чтобы не гонял впустую
