@@ -5,7 +5,13 @@ from airflow.operators.empty    import EmptyOperator
 from airflow.operators.bash     import BashOperator
 
 from datetime import datetime
-from src.utils import python_test_func
+# from src.utils import python_test_func # не хотчет он подтягивать 
+# значит будет совать сюда
+
+def python_test_func(animal:str, **context)-> None:
+    print(animal)
+    print(context['ds'])
+    print(datetime.now())
 
 with DAG (
     dag_id ='tolstyakoff_lesson2_dag',
@@ -22,10 +28,11 @@ with DAG (
         op_kwargs = {
             "animal": "dog"
         },
+    )
     
     bash_test = BashOperator(
         task_id='bash_test',
-        bash_command = 'echo: "Hello, from forest"',
+        bash_command='echo "Hello, from forest"',
     )
 
     bash_test2 = BashOperator(
