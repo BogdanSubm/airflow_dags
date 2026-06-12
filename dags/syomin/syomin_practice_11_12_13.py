@@ -81,14 +81,14 @@ def save_row_data(data, week_start, week_end):
     ) as conn:
         cursor = conn.cursor()
         cursor.execute(f"""
-            DELETE FROM syomin_10_raw_table
+            DELETE FROM syomin_11_raw_table
             WHERE week_start = %s and week_end = %s
         """, (week_start, week_end))
 
         for record in data:
             passback_params = ast.literal_eval(record.get('passback_params') if record.get('passback_params') else '{}')
             cursor.execute(f"""
-                INSERT INTO syomin_10_raw_table
+                INSERT INTO syomin_11_raw_table
                 (lti_user_id, is_correct, attempt_type, created_at, 
                  oauth_consumer_key, lis_result_sourcedid, lis_outcome_service_url,
                  week_start, week_end, loaded_at)
@@ -108,11 +108,11 @@ def save_row_data(data, week_start, week_end):
 # SQL-запрос для агрегации (использует именованные плейсхолдеры)
 AGGREGATION_SQL = """
 -- удаляем старые данные за этот период (если есть)
-DELETE FROM syomin_10_agg_table
+DELETE FROM syomin_11_agg_table
 WHERE week_start = %(week_start)s AND week_end = %(week_end)s;
 
 -- вставляем агрегированные данные за период
-INSERT INTO syomin_10_agg_table
+INSERT INTO syomin_11_agg_table
 (week_start, week_end, total_attempts, correct_attempts, success_rate,
  unique_users, attempts_per_user_avg, min_created_at, max_created_at)
 SELECT
@@ -124,13 +124,13 @@ SELECT
     COUNT(*)::float / NULLIF(COUNT(DISTINCT lti_user_id), 0) as attempts_per_user_avg,
     MIN(created_at) as min_created_at,
     MAX(created_at) as max_created_at
-FROM syomin_10_raw_table
+FROM syomin_11_raw_table
 WHERE week_start = %(week_start)s AND week_end = %(week_end)s;
 """
 
 with DAG(
-    dag_id='syomin_practice_10',
-    tags=['10', 'syomin'],
+    dag_id='syomin_practice_11_12_13',
+    tags=['11', 'syomin'],
     schedule='0 0 * * 1',
     default_args=DEFAULT_ARGS,
     max_active_runs=1,
