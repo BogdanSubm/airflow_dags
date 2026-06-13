@@ -12,7 +12,7 @@ DEFAULT_ARGS = {
     'owner': 'tolstyakoff',
     'retries': 2,
     'retry_delay': 600,
-    'start_date': datetime(2026, 6, 13),
+    'start_date': datetime(2026, 6, 12),
 }
 
 def load_from_api(**context):
