@@ -79,7 +79,7 @@ def combine_data(**context):
     import psycopg2 as pg
 
     sql_query = f"""
-        INSERT INTO spiridonov_agg_table_les9
+        INSERT INTO tolstyakoff_agg_table_les9
         SELECT lti_user_id,
                 attempt_type,
                 COUNT(1),
