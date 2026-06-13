@@ -10,8 +10,8 @@ DEFAULT_ARGS = {
     'owner': 'tolstyakoff',
     'retries': 2,
     'retry_delay': 600,
-    'start_date': datetime(2026, 11, 12),
-}
+    'start_date': datetime(2024, 20, 11), #Данные только за ноябрь :(
+
 
 def upload_data(**context):
     import psycopg2 as pg
