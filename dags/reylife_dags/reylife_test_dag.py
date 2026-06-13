@@ -16,14 +16,16 @@ DEFAULT_ARGS = {
 API_URL = 'https://b2b.itresume.ru/api/statistics'
 def get_data(**context):
     import  requests
-    import psycopg as pg
+    import psycopg2 as pg
     import ast
     import pendulum
+
     r = requests.get('https://b2b.itresume.ru/api/statistics',
                      params={'client': 'Skillfactory', 'client_key': 'M2MGWS', 'start': '2024-11-13',
                              'end': '2024-11-14'})
     data = r.json()
     print(data[1])
+
     # with pg.connect(
     #     dbname='mydb',
     #     sslmode='disable',
