@@ -1,4 +1,5 @@
-from datetime import datetime, timedelta
+from datetime import datetime
+
 import requests
 import psycopg2
 import json
@@ -22,13 +23,7 @@ DEFAULT_ARGS = {
     "retries": 2
 }
 
-
-def extract_data(ds, **kwargs):
-    end_date = ds
-
-    start_date = (
-        datetime.strptime(ds, "%Y-%m-%d") - timedelta(days=7)
-    ).strftime("%Y-%m-%d")
+def extract_data(start_date, end_date, **kwargs):
 
     response = requests.get(
         API_URL,
@@ -106,17 +101,12 @@ def aggregate_data():
 
     cur.execute("""
     INSERT INTO reylife_agg
-
     SELECT
-
         COUNT(*) as total_rows,
-
         COUNT(DISTINCT payload->>'lti_user_id'),
-
         COUNT(*) FILTER (
             WHERE payload->>'is_correct'='true'
         )
-
     FROM reylife_raw
     """)
 
@@ -174,7 +164,11 @@ with DAG(
 
     extract = PythonOperator(
         task_id="extract_data",
-        python_callable=extract_data
+        python_callable=extract_data,
+        op_kwargs={
+            "start_date": "{{ macros.ds_add(ds, -7) }}",
+            "end_date": "{{ ds }}"
+        }
     )
 
     aggregate = PythonOperator(
