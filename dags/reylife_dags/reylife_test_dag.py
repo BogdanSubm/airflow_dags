@@ -24,6 +24,7 @@ def get_data(**context):
                              'end': '2024-11-14'})
     data = r.json()
     print(data[1])
+
     # with pg.connect(
     #     dbname='mydb',
     #     sslmode='disable',
