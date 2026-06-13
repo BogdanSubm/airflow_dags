@@ -11,7 +11,7 @@ DEFAULT_ARGS = {
     'retries': 2,
     'retry_delay': 600,
     'start_date': datetime(2024, 11, 20), #Данные только за ноябрь :(
-
+}
 
 def upload_data(**context):
     import psycopg2 as pg
