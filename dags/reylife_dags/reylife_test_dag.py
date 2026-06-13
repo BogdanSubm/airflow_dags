@@ -16,7 +16,7 @@ DEFAULT_ARGS = {
 API_URL = 'https://b2b.itresume.ru/api/statistics'
 def get_data(**context):
     import  requests
-    import psycopg as pg
+    import psycopg2 as pg
     import ast
     import pendulum
     r = requests.get('https://b2b.itresume.ru/api/statistics',
