@@ -164,7 +164,7 @@ def export_csv():
 with DAG(
     dag_id="reylife_dag",
     schedule="@weekly",
-    catchup=False,
+    tags=['reylife', '@TvoiRaiii'],
     default_args=DEFAULT_ARGS
 ) as dag:
 
