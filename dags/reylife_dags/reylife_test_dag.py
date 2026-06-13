@@ -19,6 +19,7 @@ def get_data(**context):
     import psycopg2 as pg
     import ast
     import pendulum
+
     r = requests.get('https://b2b.itresume.ru/api/statistics',
                      params={'client': 'Skillfactory', 'client_key': 'M2MGWS', 'start': '2024-11-13',
                              'end': '2024-11-14'})
