@@ -163,7 +163,7 @@ def export_csv():
 
 with DAG(
     dag_id="reylife_dag",
-    schedule="@weekly",
+    schedule="@daily",
     tags=['reylife', '@TvoiRaiii'],
     default_args=DEFAULT_ARGS
 ) as dag:
