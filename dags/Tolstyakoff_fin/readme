@@ -13,3 +13,4 @@ airflow_dags/dags/Tolstyakoff/
 ├── Sint_CSV.py                    # Синтезирование данных для CSV
 ├── tolstyakoff_test.sql           # Создание raw-таблицы
 └── tolstyakoff_test_raw_sales.csv # "сырой" массив
+Загружены отдельно в zip, прикреплены к финальной работе
