@@ -10,7 +10,7 @@ DEFAULT_ARGS = {
     'owner': 'tolstyakoff',
     'retries': 2,
     'retry_delay': 600,
-    'start_date': datetime(2024, 20, 11), #Данные только за ноябрь :(
+    'start_date': datetime(2024, 11, 20), #Данные только за ноябрь :(
 
 
 def upload_data(**context):
