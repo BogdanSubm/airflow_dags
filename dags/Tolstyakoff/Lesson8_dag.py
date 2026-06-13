@@ -12,7 +12,7 @@ DEFAULT_ARGS = {
     'owner': 'tolstyakoff',
     'retries': 2,
     'retry_delay': 600,
-    'start_date': datetime(2026, 06, 13),
+    'start_date': datetime(2026, 6, 13),
 }
 
 def load_from_api(**context):
@@ -64,12 +64,12 @@ def load_from_api(**context):
                 row
             )
         
-        conn.commit() 
+        conn.commit()  
 
 # Инициализация DAG
 with DAG(
-    dag_id="tolstyakoff_load_from_api_to_DB",
-    tags=['4', 'admin'],
+    dag_id="tolstyakoff_lesson8_1_dag",
+    tags=['4', 'tolstyakoff'],
     schedule='@daily',
     default_args=DEFAULT_ARGS,
     max_active_runs=1,
