@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 # Финальный DAG для динамического создания агрегатов
-# Добавляем цвета в Graph View для красоты
 
 from datetime import datetime
 from airflow import DAG
@@ -31,25 +30,16 @@ with DAG(
     tags=['final', 'tolstyakoff', 'dynamic'],
     default_args=DEFAULT_ARGS,
     schedule='@daily',
-    catchup=True,            # Не догоняем пропущенные дни
+    catchup=False,           # Не догоняем пропущенные дни
     max_active_runs=1,       # Только один запуск DAG одновременно
     description='Динамический агрегатор таблиц по конфигу',
 ) as dag:
 
-    # Цветные заглушки для красивого графа
-    start = EmptyOperator(
-        task_id='▶️_start',
-        ui_color='#2E8B57',   # морская волна
-        ui_fgcolor='#FFFFFF'  # белый текст
-    )
+    # Простые операторы (цвета убраны)
+    start = EmptyOperator(task_id='start')
+    end = EmptyOperator(task_id='end')
     
-    end = EmptyOperator(
-        task_id='⏹️_end',
-        ui_color='#8B0000',   # тёмно-красный
-        ui_fgcolor='#FFFFFF'
-    )
-    
-    # Список для хранения групп задач (чтобы красиво связать их в конце)
+    # Список для хранения групп задач
     task_groups = []
     
     # Основной цикл: для каждой таблицы из конфига создаём свой пайплайн
@@ -64,8 +54,6 @@ with DAG(
                 task_id=f'create_{table_name}',
                 python_callable=create_table,
                 op_kwargs={'table_name': table_name, 'ddl_sql': cfg['table_ddl']},
-                # Цвета для оператора (не все версии Airflow поддерживают)
-                # ui_color='#4682B4',  # стальной синий
             )
             
             # 2. Загружаем данные
@@ -75,22 +63,18 @@ with DAG(
                 op_kwargs={'table_name': table_name, 'dml_sql': cfg['table_dml']},
             )
             
-            create >> load  # сначала создай, потом загружай
+            create >> load
             
             # 3. Если в конфиге флаг экспорта — добавляем задачу выгрузки в S3
-            if cfg.get('need_to_export', False):  # по умолчанию False
+            if cfg.get('need_to_export', False):
                 export = PythonOperator(
                     task_id=f'export_{table_name}_to_s3',
                     python_callable=export_to_s3,
                     op_kwargs={'table_name': table_name},
-                    retries=3,   # у экспорта больше шансов на успех
+                    retries=3,
                 )
                 load >> export
-                last_task = export
-            else:
-                last_task = load
         
-        # Запоминаем последнюю задачу группы для связки с end
         task_groups.append(tg)
     
     # Собираем пайплайн: старт → все группы параллельно → конец
