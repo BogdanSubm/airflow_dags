@@ -159,7 +159,7 @@ config = [
 
 DEFAULT_ARGS = {
     "owner": "reylife",
-    "start_date": datetime(2026, 6, 12),
+    "start_date": datetime(2026, 6, 10),
     "retries": 2
 }
 
