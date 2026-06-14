@@ -192,6 +192,6 @@ with DAG(
                 query=f"SELECT * FROM {table['table_name']}",
                 key=f"{table['table_name']}.csv"
             )
-            start >> create >> insert >> export >> end
+            start >> create >> insert >> export >> end # вместо скипмиксина сделала так, не знаю насколько нормально так делать
         else:
             start >> create >> insert >> end
