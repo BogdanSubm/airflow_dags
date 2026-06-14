@@ -2,7 +2,6 @@ from datetime import datetime
 
 from airflow import DAG
 from airflow.operators.empty import EmptyOperator
-
 from reylife_dags.operators.extract_operator import ExtractDataOperator
 from reylife_dags.operators.export_operator import ExportCsvOperator
 from reylife_dags.operators.branch_operator import CustomBranchOperator
