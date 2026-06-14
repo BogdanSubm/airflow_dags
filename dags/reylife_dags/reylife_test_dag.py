@@ -2,10 +2,10 @@ from datetime import datetime
 
 from airflow import DAG
 from airflow.operators.empty import EmptyOperator
-from reylife_dags.operators.extract_operator import ExtractDataOperator
-from reylife_dags.operators.export_operator import ExportCsvOperator
-from reylife_dags.operators.branch_operator import CustomBranchOperator
-from reylife_dags.operators.postgres_operator import CustomPostgresOperator
+# from reylife_dags.operators.extract_operator import ExtractDataOperator
+# from reylife_dags.operators.export_operator import ExportCsvOperator
+# from reylife_dags.operators.branch_operator import CustomBranchOperator
+# from reylife_dags.operators.postgres_operator import CustomPostgresOperator
 
 
 # дни месяца когда запускаем расчёты
@@ -67,32 +67,32 @@ with DAG(
         skip_task_id="export_csv"
     )
 
-    create_tables = CustomPostgresOperator(
-        task_id="create_tables",
-        sql=[SQL_CREATE_RAW, SQL_CREATE_AGG]
-    )
-
-    extract = ExtractDataOperator(
-        task_id="extract_data",
-        start_date="{{ macros.ds_add(ds, -7) }}",
-        end_date="{{ ds }}"
-    )
-
-    aggregate = CustomPostgresOperator(
-        task_id="aggregate_data",
-        sql=SQL_AGGREGATE
-    )
-
-    export = ExportCsvOperator(
-        task_id="export_csv",
-        trigger_rule="none_failed_min_one_success"
-    )
+    # create_tables = CustomPostgresOperator(
+    #     task_id="create_tables",
+    #     sql=[SQL_CREATE_RAW, SQL_CREATE_AGG]
+    # )
+    #
+    # extract = ExtractDataOperator(
+    #     task_id="extract_data",
+    #     start_date="{{ macros.ds_add(ds, -7) }}",
+    #     end_date="{{ ds }}"
+    # )
+    #
+    # aggregate = CustomPostgresOperator(
+    #     task_id="aggregate_data",
+    #     sql=SQL_AGGREGATE
+    # )
+    #
+    # export = ExportCsvOperator(
+    #     task_id="export_csv",
+    #     trigger_rule="none_failed_min_one_success"
+    # )
 
     end = EmptyOperator(
         task_id="end",
         trigger_rule="none_failed_min_one_success"
     )
 
-    start >> branch >> [create_tables, export]
-    create_tables >> extract >> aggregate >> export
-    export >> end
+    # start >> branch >> [create_tables, export]
+    # create_tables >> extract >> aggregate >> export
+    # export >> end
