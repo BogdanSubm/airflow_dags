@@ -51,7 +51,7 @@ with DAG(
                 python_callable=export_table_to_s3,
                 op_kwargs={
                     'table_name': table,
-                    'bucket_name': 'airflow-exports',
+                    'bucket_name': 'default-storage',
                     's3_conn_id': 'conn_s3'
                 },
             )
