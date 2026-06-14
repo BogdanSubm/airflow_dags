@@ -167,7 +167,7 @@ with DAG(
     dag_id="reylife_dynamic_dag",
     schedule="@daily",
     tags=["reylife", "@TvoiRaiii"],
-    default_args=DEFAULT_ARGS,
+    default_args=DEFAULT_ARGS, # забыла указать аргументы которые не дают одновременно двум таскам работать
 ) as dag:
 
     start = EmptyOperator(task_id="start")
