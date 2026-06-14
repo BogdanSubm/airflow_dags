@@ -3,10 +3,10 @@ from datetime import datetime
 from airflow import DAG
 from airflow.operators.empty import EmptyOperator
 
-from operators.extract_operator import ExtractDataOperator
-from operators.export_operator import ExportCsvOperator
-from operators.branch_operator import CustomBranchOperator
-from operators.postgres_operator import CustomPostgresOperator
+from .operators.extract_operator import ExtractDataOperator
+from .operators.export_operator import ExportCsvOperator
+from .operators.branch_operator import CustomBranchOperator
+from .operators.postgres_operator import CustomPostgresOperator
 
 
 # дни месяца когда запускаем расчёты
