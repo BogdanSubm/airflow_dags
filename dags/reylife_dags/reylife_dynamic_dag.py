@@ -119,40 +119,45 @@ config = [
         'table_name': 'reylife_agg_by_user',
         'table_ddl': """
             CREATE TABLE IF NOT EXISTS reylife_agg_by_user (
-                lti_user_id TEXT,
-                total_attempts INT,
+                lti_user_id     TEXT,
+                total_attempts  INT,
                 correct_answers INT
             )
         """,
-        'table_dml': """
-            DELETE FROM reylife_agg_by_user;
+        # два отдельных запроса в списке
+        'table_dml': [
+            "DELETE FROM reylife_agg_by_user",
+            """
             INSERT INTO reylife_agg_by_user
             SELECT
                 lti_user_id,
-                COUNT(*) AS total_attempts,
+                COUNT(*)                                  AS total_attempts,
                 COUNT(*) FILTER (WHERE is_correct = true) AS correct_answers
             FROM reylife_raw
             GROUP BY lti_user_id
-        """,
+            """
+        ],
         'need_to_export': True
     },
     {
         'table_name': 'reylife_agg_by_day',
         'table_ddl': """
             CREATE TABLE IF NOT EXISTS reylife_agg_by_day (
-                day DATE,
+                day            DATE,
                 total_attempts INT
             )
         """,
-        'table_dml': """
-            DELETE FROM reylife_agg_by_day;
+        'table_dml': [
+            "DELETE FROM reylife_agg_by_day",
+            """
             INSERT INTO reylife_agg_by_day
             SELECT
                 created_at::date AS day,
-                COUNT(*) AS total_attempts
+                COUNT(*)         AS total_attempts
             FROM reylife_raw
             GROUP BY created_at::date
-        """,
+            """
+        ],
         'need_to_export': False
     }
 ]
