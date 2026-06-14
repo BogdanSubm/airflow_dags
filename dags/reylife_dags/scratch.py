@@ -85,7 +85,7 @@ def get_data(**context):
 
 
 with DAG(
-    dag_id='reylife_test_dag',
+    dag_id='reylife_test2_dag',
     tags=['reylife', '@TvoiRaiii'],
     schedule='@once',
     default_args=DEFAULT_ARGS
