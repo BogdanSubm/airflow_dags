@@ -1,6 +1,6 @@
 import psycopg2 as pg
 from airflow.hooks.base import BaseHook
-from airflow.models import BaseOperator
+from airflow.sensors.base import BaseSensorOperator
 
 class SqlSensor(BaseSensorOperator):
     template_fields = ('sql',)
