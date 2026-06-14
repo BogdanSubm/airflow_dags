@@ -46,7 +46,7 @@ with DAG(
         first_tasks.append(create)
 
         if agg['need_to_export']:
-            export_task = PythonOperator(
+            export = PythonOperator(
                 task_id=f'export_{table}',
                 python_callable=export_table_to_s3,
                 op_kwargs={
