@@ -65,7 +65,7 @@ def get_data(**context):
                 attempt_type,
                 created_at
             )
-            VALUES (%s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s::boolean, %s, %s)
             ON CONFLICT DO NOTHING
         """, (
             row.get('lti_user_id'),
