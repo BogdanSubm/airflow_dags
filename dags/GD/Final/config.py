@@ -54,7 +54,6 @@ config = [
         "need_to_export": True,
         "export_columns": [ "total_rows"],
     },
-    ,
     {
         "table_name": "test_gd_agg4",
         "table_ddl": """
