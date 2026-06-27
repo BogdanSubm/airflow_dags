@@ -35,6 +35,24 @@ config = [
         """,
         "need_to_export": True,
         "export_columns": ["lis_result_sourcedid", "total_rows"],
+    },
+    {
+        "table_name": "test_gd_agg3",
+        "table_ddl": """
+            CREATE TABLE IF NOT EXISTS public.test_gd_agg3 (
+                lis_outcome_service_url varchar(1000),
+                total_rows bigint
+            )
+        """,
+        "table_dml": """
+            SELECT
+                lis_outcome_service_url,
+                COUNT(*) AS total_rows
+            FROM public.test_gd
+            GROUP BY lis_outcome_service_url
+        """,
+        "need_to_export": True,
+        "export_columns": [ "total_rows"],
     }
     
 ]
