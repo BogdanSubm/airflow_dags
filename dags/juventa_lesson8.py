@@ -1,7 +1,7 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.operators.empty import EmptyOperator
-from airflow.hook.base import BaseHook
+from airflow.hooks.base import BaseHook
 from datetime import datetime
 
 DEFAULT_ARGS = {
