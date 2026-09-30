@@ -140,7 +140,6 @@ def save_raw_to_minio(**context):
     s3_client.put_object(
         Body=file,
         Bucket='default-storage',
-        #Key=f"juventa_{start}_{end}.csv"
         Key=f"juventa/raw/j_{period_start:%Y-%m-%d}-{period_end:%Y-%m-%d}.csv"
     )
 
