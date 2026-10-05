@@ -159,7 +159,7 @@ def save_raw_to_minio(month_start:str, month_end:str, **context):
 
 with DAG(
     dag_id='juventa_10_practice',
-    #schedule='0 0 * * 1',  # Понедельник в 00:00 UTC
+    #schedule='0 0 * * 1',  #  Понедельник в 00:00 UTC
     schedule='@daily',
     #catchup=False,
     default_args=DEFAULT_ARGS,
