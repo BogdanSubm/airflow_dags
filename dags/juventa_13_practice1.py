@@ -3,7 +3,7 @@ from airflow.operators.empty import EmptyOperator
 from airflow.hooks.base import BaseHook
 from datetime import datetime, timedelta
 import pendulum
-from operators.api_to_pg_operator import ApiToPgOperator
+from juventa.api_to_pg_operator import JApiToPgOperator
 from juventa.custom_branch_operator1 import JCustomBranchOperatorNew
 from airflow.operators.python import PythonOperator
 
@@ -131,7 +131,7 @@ with DAG(
         weekdays=[0, 4, 6],
     )
 
-    load_task = ApiToPgOperator(
+    load_task = JApiToPgOperator(
         task_id='load_task',
         date_from = '{{ ds }}',  #'{{ current_month_start(ds) }}',
         date_to = '{{ next_ds }}'#, '{{ current_month_end(ds) }}',
