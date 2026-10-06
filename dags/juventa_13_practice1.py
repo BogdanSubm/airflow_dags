@@ -1,10 +1,11 @@
 from airflow import DAG
 from airflow.operators.empty import EmptyOperator
-from airflow.operators.python import PythonOperator
 from airflow.hooks.base import BaseHook
 from datetime import datetime, timedelta
 import pendulum
-
+from operators.api_to_pg_operator import ApiToPgOperator
+from juventa.custom_branch_operator1 import JCustomBranchOperatorNew
+from airflow.operators.python import PythonOperator
 
 DEFAULT_ARGS = {
     'owner': 'juventa',
@@ -13,7 +14,7 @@ DEFAULT_ARGS = {
     'start_date': pendulum.datetime(2024, 10, 23, tz="UTC")
 }
 
-API_URL = "https://b2b.itresume.ru/api/statistics"
+#API_URL = "https://b2b.itresume.ru/api/statistics"
 
 #создаю свои Templates!
 class MonthTemplates:
@@ -33,62 +34,6 @@ class MonthTemplates:
         else:
             next_month = logical_dt.replace(month=logical_dt.month + 1, day=1)
         return (next_month - timedelta(days=1)).strftime('%Y-%m-%d')
-
-#загружаем данные из api и сохраняем в сырой слой
-def load_from_api(month_start:str, month_end:str, **context):
-    import requests
-    import pendulum
-    import psycopg2 as pg
-    import ast
-
-    payload = {
-        'client': 'Skillfactory',
-        'client_key': 'M2MGWS',
-        'start': month_start,
-        'end': month_end
-    }
-    response = requests.get(API_URL, params=payload, timeout=60)
-    response.raise_for_status()
-    data = response.json()
-
-    print(f"Запрос с {month_start} по {month_end}, получено: {len(data)} записей")
-
-    #данные которые ранее получили из API
-    connection = BaseHook.get_connection('conn_pg')
-    with pg.connect(
-            dbname='etl',
-            sslmode='disable',
-            user=connection.login,
-            password=connection.password,
-            host=connection.host,
-            port=connection.port,
-            connect_timeout=600,
-            keepalives_idle=600,
-            tcp_user_timeout=600
-    ) as conn:
-        cursor = conn.cursor()
-        delete_query = '''
-            DELETE FROM juventa_raw_month_table
-            where created_at >= %s::timestamp
-              and created_at < %s::timestamp + interval '1 day'        
-            '''
-        cursor.execute(delete_query,(month_start,month_end))
-        print(f"Удалены данные в БД PostgreSQL за период с {month_start} по {month_end}")
-
-        for el in data:
-            row = []
-            passback_params = ast.literal_eval(el.get('passback_params') or '{}')
-            row.append(el.get('lti_user_id'))
-            row.append(True if el.get('is_correct') == 1 else False)
-            row.append(el.get('attempt_type'))
-            row.append(el.get('created_at'))
-            row.append(passback_params.get('oauth_consumer_key'))
-            row.append(passback_params.get('lis_result_sourcedid'))
-            row.append(passback_params.get('lis_outcome_service_url'))
-
-            cursor.execute("INSERT INTO juventa_raw_month_table VALUES(%s, %s, %s, %s, %s, %s, %s)", row)
-        conn.commit()
-        print('Сырые данные сохранены в БД PostgreSQL')
 
 #Сохраняем в объектное хранилище
 def save_raw_to_minio(month_start:str, month_end:str, **context):
@@ -158,8 +103,8 @@ def save_raw_to_minio(month_start:str, month_end:str, **context):
 
 
 with DAG(
-    dag_id='juventa_10_practice',
-    #schedule='0 0 * * 1',  #  Понедельник в 00:00 UTC
+    dag_id='juventa_13_homework1',
+    #schedule='0 0 * * 1',  # Понедельник в 00:00 UTC
     schedule='@daily',
     #catchup=False,
     default_args=DEFAULT_ARGS,
@@ -175,26 +120,24 @@ with DAG(
 ) as dag:
     dag_start = EmptyOperator(task_id='dag_start')
 
-    dag_end = EmptyOperator(task_id='dag_end')
+    dag_end = EmptyOperator(
+        task_id='dag_end',
+        trigger_rule='always'
+    )
 
-    load_task = PythonOperator(
+    branch = JCustomBranchOperatorNew(
+        task_id='branch',
+        task_id_exclude = 'load_task',
+        weekdays=[0, 4, 6],
+    )
+
+    load_task = ApiToPgOperator(
         task_id='load_task',
-        python_callable=load_from_api,
-        op_kwargs={
-            'month_start': '{{ current_month_start(ds) }}',
-            'month_end': '{{ current_month_end(ds) }}',
-        }
+        date_from = '{{ ds }}',  #'{{ current_month_start(ds) }}',
+        date_to = '{{ next_ds }}'#, '{{ current_month_end(ds) }}',
     )
 
-    raw_export_task = PythonOperator(
-        task_id='raw_export_task',
-        python_callable=save_raw_to_minio,
-        op_kwargs={
-            'month_start': '{{ current_month_start(ds) }}',
-            'month_end': '{{ current_month_end(ds) }}',
-        }
-    )
-    dag_start >> load_task
+    dag_start >> branch >> load_task
 
-    load_task >> raw_export_task >> dag_end
+    load_task >> dag_end
 
